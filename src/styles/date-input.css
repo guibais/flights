@@ -1,0 +1,30 @@
+/* Remove default date input icons */
+.date-input-no-icon::-webkit-calendar-picker-indicator {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.date-input-no-icon::-webkit-inner-spin-button,
+.date-input-no-icon::-webkit-outer-spin-button {
+  display: none !important;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox specific */
+.date-input-no-icon::-moz-calendar-picker-indicator {
+  display: none !important;
+}
+
+/* Additional cross-browser support */
+.date-input-no-icon {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+/* Ensure the input still functions properly */
+.date-input-no-icon:focus {
+  outline: none;
+}

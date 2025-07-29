@@ -6,25 +6,42 @@ import { AirportSelector } from './AirportSelector.tsx'
 import { DateSelector } from './DateSelector.tsx'
 import { PassengerSelector } from './PassengerSelector.tsx'
 import { FlightResults } from './FlightResults.tsx'
+import { MultiCitySegments } from './MultiCitySegments.tsx'
 import type {
   Airport,
   CabinClass,
   FlightSearchParams,
+  MultiCitySegment,
   PassengerCounts,
   TripType,
 } from '../types/flight.types'
 
 export function FlightSearch() {
-  const [tripType, setTripType] = useState<TripType>('round-trip')
-  const [origin, setOrigin] = useState<Airport | null>(null)
-  const [destination, setDestination] = useState<Airport | null>(null)
-  // Função para formatar data no formato YYYY-MM-DD
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0]
   }
 
-  // Pré-selecionar datas: hoje para partida e 10 dias depois para retorno
   const today = new Date()
+
+  const [tripType, setTripType] = useState<TripType>('round-trip')
+  const [origin, setOrigin] = useState<Airport | null>(null)
+  const [destination, setDestination] = useState<Airport | null>(null)
+  const [multiCitySegments, setMultiCitySegments] = useState<
+    Array<MultiCitySegment>
+  >(() => [
+    {
+      id: 'segment-1',
+      origin: null,
+      destination: null,
+      date: formatDate(today),
+    },
+    {
+      id: 'segment-2',
+      origin: null,
+      destination: null,
+      date: formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000)), // tomorrow
+    },
+  ])
   const returnDateDefault = new Date(today)
   returnDateDefault.setDate(today.getDate() + 10)
 
@@ -60,6 +77,37 @@ export function FlightSearch() {
   })
 
   const handleSearch = () => {
+    if (tripType === 'multi-city') {
+      const validSegments = multiCitySegments.filter(
+        (segment) => segment.origin && segment.destination && segment.date,
+      )
+      if (validSegments.length < 2) {
+        alert(
+          'Please fill in at least 2 complete flight segments for multi-city search',
+        )
+        return
+      }
+      const firstSegment = validSegments[0]
+      const params: FlightSearchParams = {
+        originSkyId: firstSegment.origin!.skyId,
+        destinationSkyId: firstSegment.destination!.skyId,
+        originEntityId: firstSegment.origin!.entityId,
+        destinationEntityId: firstSegment.destination!.entityId,
+        date: firstSegment.date,
+        adults: passengers.adults,
+        children: passengers.children,
+        infants: passengers.infants,
+        cabinClass,
+        sortBy: 'best',
+        currency: 'USD',
+        market: 'en-US',
+        countryCode: 'US',
+        locale: 'en-US',
+      }
+      setSearchParams(params)
+      return
+    }
+
     if (!origin || !destination || !departureDate) {
       return
     }
@@ -76,6 +124,10 @@ export function FlightSearch() {
       infants: passengers.infants,
       cabinClass,
       sortBy: 'best',
+      currency: 'USD',
+      market: 'en-US',
+      countryCode: 'US',
+      locale: 'en-US',
     }
 
     setSearchParams(params)
@@ -114,87 +166,125 @@ export function FlightSearch() {
 
       {/* Search Form */}
       <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4">
-        {/* From/To Row */}
-        <div className="grid grid-cols-2 gap-4 items-end">
-          {/* Origin */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              From
-            </label>
-            <AirportSelector
-              value={origin}
-              onChange={setOrigin}
-              placeholder="Where from?"
+        {tripType === 'multi-city' ? (
+          /* Multi-city Form */
+          <div className="space-y-4">
+            <MultiCitySegments
+              segments={multiCitySegments}
+              onSegmentsChange={setMultiCitySegments}
             />
-          </div>
 
-          {/* Destination */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              To
-            </label>
-            <AirportSelector
-              value={destination}
-              onChange={setDestination}
-              placeholder="Where to?"
-            />
-          </div>
-        </div>
-
-        {/* Swap Button Row */}
-        <div className="flex justify-center">
-          <button
-            onClick={swapAirports}
-            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
-            aria-label="Swap airports"
-          >
-            <ArrowRightLeft className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Dates and Travelers Row */}
-        <div className={`grid gap-4 items-end ${tripType === 'round-trip' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
-          {/* Departure Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Departure
-            </label>
-            <DateSelector value={departureDate} onChange={setDepartureDate} />
-          </div>
-
-          {/* Return Date */}
-          {tripType === 'round-trip' && (
+            {/* Travelers for Multi-city */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Return
+                Travelers
               </label>
-              <DateSelector
-                value={returnDate}
-                onChange={setReturnDate}
-                minDate={departureDate}
+              <PassengerSelector
+                passengers={passengers}
+                onPassengersChange={setPassengers}
+                cabinClass={cabinClass}
+                onCabinClassChange={setCabinClass}
               />
             </div>
-          )}
-
-          {/* Travelers */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Travelers
-            </label>
-            <PassengerSelector
-              passengers={passengers}
-              onPassengersChange={setPassengers}
-              cabinClass={cabinClass}
-              onCabinClassChange={setCabinClass}
-            />
           </div>
-        </div>
+        ) : (
+          /* Round-trip and One-way Form */
+          <>
+            {/* From/To Row */}
+            <div className="grid grid-cols-2 gap-4 items-end">
+              {/* Origin */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  From
+                </label>
+                <AirportSelector
+                  value={origin}
+                  onChange={setOrigin}
+                  placeholder="Where from?"
+                />
+              </div>
+
+              {/* Destination */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  To
+                </label>
+                <AirportSelector
+                  value={destination}
+                  onChange={setDestination}
+                  placeholder="Where to?"
+                />
+              </div>
+            </div>
+
+            {/* Swap Button Row */}
+            <div className="flex justify-center">
+              <button
+                onClick={swapAirports}
+                className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
+                aria-label="Swap airports"
+              >
+                <ArrowRightLeft className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Dates and Travelers Row */}
+            <div
+              className={`grid gap-4 items-end ${tripType === 'round-trip' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}
+            >
+              {/* Departure Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Departure
+                </label>
+                <DateSelector
+                  value={departureDate}
+                  onChange={setDepartureDate}
+                />
+              </div>
+
+              {/* Return Date */}
+              {tripType === 'round-trip' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Return
+                  </label>
+                  <DateSelector
+                    value={returnDate}
+                    onChange={setReturnDate}
+                    minDate={departureDate}
+                  />
+                </div>
+              )}
+
+              {/* Travelers */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Travelers
+                </label>
+                <PassengerSelector
+                  passengers={passengers}
+                  onPassengersChange={setPassengers}
+                  cabinClass={cabinClass}
+                  onCabinClassChange={setCabinClass}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Search Button */}
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleSearch}
-            disabled={!origin || !destination || !departureDate || isSearching}
+            disabled={
+              isSearching ||
+              (tripType === 'multi-city'
+                ? multiCitySegments.filter(
+                    (s) => s.origin && s.destination && s.date,
+                  ).length < 2
+                : !origin || !destination || !departureDate)
+            }
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 sm:px-8 rounded-lg font-medium flex items-center gap-2 transition-colors w-full sm:w-auto"
           >
             <SearchIcon className="w-5 h-5" />
@@ -202,6 +292,18 @@ export function FlightSearch() {
           </button>
         </div>
       </div>
+
+      {/* Multi-city Info */}
+      {tripType === 'multi-city' && searchParams && (
+        <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
+          <p className="text-blue-300 font-medium mb-2">Multi-city Search</p>
+          <p className="text-blue-200 text-sm">
+            Showing results for the first segment. In a production app, this
+            would search all segments and provide comprehensive multi-city
+            booking options.
+          </p>
+        </div>
+      )}
 
       {/* Results */}
       {error && (

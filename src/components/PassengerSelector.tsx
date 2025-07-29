@@ -42,16 +42,13 @@ export function PassengerSelector({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-
-
   const updatePassengerCount = (type: keyof PassengerCounts, delta: number) => {
     const newCount = Math.max(0, passengers[type] + delta)
-    
-    // Ensure at least one adult
+
     if (type === 'adults' && newCount === 0) {
       return
     }
-    
+
     onPassengersChange({
       ...passengers,
       [type]: newCount,
@@ -61,18 +58,25 @@ export function PassengerSelector({
   const getDisplayText = () => {
     const parts = []
     if (passengers.adults > 0) {
-      parts.push(`${passengers.adults} adult${passengers.adults > 1 ? 's' : ''}`)
+      parts.push(
+        `${passengers.adults} adult${passengers.adults > 1 ? 's' : ''}`,
+      )
     }
     if (passengers.children > 0) {
-      parts.push(`${passengers.children} child${passengers.children > 1 ? 'ren' : ''}`)
+      parts.push(
+        `${passengers.children} child${passengers.children > 1 ? 'ren' : ''}`,
+      )
     }
     if (passengers.infants > 0) {
-      parts.push(`${passengers.infants} infant${passengers.infants > 1 ? 's' : ''}`)
+      parts.push(
+        `${passengers.infants} infant${passengers.infants > 1 ? 's' : ''}`,
+      )
     }
-    
+
     const passengersText = parts.join(', ')
-    const classText = cabinClassOptions.find(c => c.value === cabinClass)?.label || 'Economy'
-    
+    const classText =
+      cabinClassOptions.find((c) => c.value === cabinClass)?.label || 'Economy'
+
     return `${passengersText}, ${classText}`
   }
 
@@ -84,9 +88,11 @@ export function PassengerSelector({
         className="w-full px-4 py-3 pl-10 bg-gray-700 border border-gray-600 rounded-lg text-white text-left focus:border-blue-500 focus:outline-none flex items-center justify-between"
       >
         <span className="truncate">{getDisplayText()}</span>
-        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
       </button>
-      
+
       <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
 
       {isOpen && (
@@ -109,7 +115,9 @@ export function PassengerSelector({
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-8 text-center font-medium">{passengers.adults}</span>
+                <span className="w-8 text-center font-medium">
+                  {passengers.adults}
+                </span>
                 <button
                   onClick={() => updatePassengerCount('adults', 1)}
                   className="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center hover:bg-gray-600"
@@ -132,7 +140,9 @@ export function PassengerSelector({
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-8 text-center font-medium">{passengers.children}</span>
+                <span className="w-8 text-center font-medium">
+                  {passengers.children}
+                </span>
                 <button
                   onClick={() => updatePassengerCount('children', 1)}
                   className="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center hover:bg-gray-600"
@@ -155,7 +165,9 @@ export function PassengerSelector({
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-8 text-center font-medium">{passengers.infants}</span>
+                <span className="w-8 text-center font-medium">
+                  {passengers.infants}
+                </span>
                 <button
                   onClick={() => updatePassengerCount('infants', 1)}
                   className="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center hover:bg-gray-600"

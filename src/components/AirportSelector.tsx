@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { MapPin, Plane } from 'lucide-react'
 import { flightService } from '../services/flight.service'
 import { useDebounce } from '../hooks/useDebounce'
-import { MapPin, Plane } from 'lucide-react'
 import type { Airport } from '../types/flight.types'
 
 type AirportSelectorProps = {
@@ -11,14 +11,17 @@ type AirportSelectorProps = {
   placeholder: string
 }
 
-export function AirportSelector({ value, onChange, placeholder }: AirportSelectorProps) {
+export function AirportSelector({
+  value,
+  onChange,
+  placeholder,
+}: AirportSelectorProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Debounce the search query to prevent too many API requests
   const debouncedQuery = useDebounce(query, 300) // 300ms delay
 
   const { data: airports = [], isLoading } = useQuery({
@@ -55,7 +58,7 @@ export function AirportSelector({ value, onChange, placeholder }: AirportSelecto
     setInputValue(newValue)
     setQuery(newValue)
     setIsOpen(true)
-    
+
     if (!newValue) {
       onChange(null)
     }
@@ -96,17 +99,15 @@ export function AirportSelector({ value, onChange, placeholder }: AirportSelecto
           className="absolute z-50 w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         >
           {isLoading && (
-            <div className="px-4 py-3 text-gray-400">
-              Searching airports...
-            </div>
+            <div className="px-4 py-3 text-gray-400">Searching airports...</div>
           )}
-          
-          {!isLoading && airports.length === 0 && debouncedQuery.length >= 2 && (
-            <div className="px-4 py-3 text-gray-400">
-              No airports found
-            </div>
-          )}
-          
+
+          {!isLoading &&
+            airports.length === 0 &&
+            debouncedQuery.length >= 2 && (
+              <div className="px-4 py-3 text-gray-400">No airports found</div>
+            )}
+
           {airports.map((airport) => (
             <button
               key={`${airport.skyId}-${airport.entityId}`}

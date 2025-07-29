@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { X, Plane, Calendar, Users, CreditCard, Check } from 'lucide-react'
-import type { FlightItinerary, Airport } from '../types/flight.types'
+import { Calendar, Check, CreditCard, Plane, Users, X } from 'lucide-react'
+import type { Airport, FlightItinerary } from '../types/flight.types'
 
 type FlightBookingModalProps = {
   isOpen: boolean
@@ -11,13 +11,13 @@ type FlightBookingModalProps = {
   passengers: { adults: number; children: number; infants: number }
 }
 
-export function FlightBookingModal({ 
-  isOpen, 
-  onClose, 
-  itinerary, 
-  origin, 
+export function FlightBookingModal({
+  isOpen,
+  onClose,
+  itinerary,
+  origin,
   destination,
-  passengers 
+  passengers,
 }: FlightBookingModalProps) {
   const [step, setStep] = useState<'review' | 'booking' | 'success'>('review')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -46,16 +46,18 @@ export function FlightBookingModal({
     return `${hours}h ${mins}m`
   }
 
-  const totalPassengers = passengers.adults + passengers.children + passengers.infants
-  const totalPrice = parseFloat(itinerary.price.formatted.replace(/[^0-9.]/g, '')) * totalPassengers
+  const totalPassengers =
+    passengers.adults + passengers.children + passengers.infants
+  const totalPrice =
+    parseFloat(itinerary.price.formatted.replace(/[^0-9.]/g, '')) *
+    totalPassengers
 
   const handleBookFlight = async () => {
     setIsProcessing(true)
     setStep('booking')
-    
-    // Simular processo de reserva
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
+
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
     setStep('success')
     setIsProcessing(false)
   }
@@ -93,19 +95,27 @@ export function FlightBookingModal({
                   <Plane className="w-4 h-4" />
                   Flight Details
                 </h3>
-                
+
                 {itinerary.legs.map((leg, index) => (
-                  <div key={leg.id} className={index > 0 ? 'mt-4 pt-4 border-t border-gray-700' : ''}>
+                  <div
+                    key={leg.id}
+                    className={
+                      index > 0 ? 'mt-4 pt-4 border-t border-gray-700' : ''
+                    }
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-lg font-semibold text-white">
-                          {formatTime(leg.departure)} - {formatTime(leg.arrival)}
+                          {formatTime(leg.departure)} -{' '}
+                          {formatTime(leg.arrival)}
                         </div>
                         <div className="text-sm text-gray-400">
-                          {leg.origin.displayCode} → {leg.destination.displayCode}
+                          {leg.origin.displayCode} →{' '}
+                          {leg.destination.displayCode}
                         </div>
                         <div className="text-sm text-gray-400">
-                          {formatDate(leg.departure)} • {formatDuration(leg.durationInMinutes)}
+                          {formatDate(leg.departure)} •{' '}
+                          {formatDuration(leg.durationInMinutes)}
                         </div>
                       </div>
                       <div className="text-right">
@@ -113,7 +123,9 @@ export function FlightBookingModal({
                           {leg.carriers.marketing[0]?.name}
                         </div>
                         <div className="text-sm text-gray-400">
-                          {leg.stopCount === 0 ? 'Nonstop' : `${leg.stopCount} stops`}
+                          {leg.stopCount === 0
+                            ? 'Nonstop'
+                            : `${leg.stopCount} stops`}
                         </div>
                       </div>
                     </div>
@@ -157,7 +169,9 @@ export function FlightBookingModal({
                 </h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Base fare ({totalPassengers} passengers)</span>
+                    <span className="text-gray-400">
+                      Base fare ({totalPassengers} passengers)
+                    </span>
                     <span className="text-white">${totalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -167,7 +181,9 @@ export function FlightBookingModal({
                   <div className="border-t border-gray-700 pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span className="text-white">Total</span>
-                      <span className="text-green-400 text-lg">${totalPrice.toFixed(2)}</span>
+                      <span className="text-green-400 text-lg">
+                        ${totalPrice.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -194,8 +210,12 @@ export function FlightBookingModal({
           {step === 'booking' && (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-              <h3 className="text-lg font-medium text-white mb-2">Processing Your Booking</h3>
-              <p className="text-gray-400">Please wait while we confirm your flight...</p>
+              <h3 className="text-lg font-medium text-white mb-2">
+                Processing Your Booking
+              </h3>
+              <p className="text-gray-400">
+                Please wait while we confirm your flight...
+              </p>
             </div>
           )}
 
@@ -204,13 +224,20 @@ export function FlightBookingModal({
               <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Booking Confirmed!</h3>
+              <h3 className="text-lg font-medium text-white mb-2">
+                Booking Confirmed!
+              </h3>
               <p className="text-gray-400 mb-6">
-                Your flight has been successfully booked. You will receive a confirmation email shortly.
+                Your flight has been successfully booked. You will receive a
+                confirmation email shortly.
               </p>
               <div className="bg-gray-900 rounded-lg p-4 mb-6">
-                <div className="text-sm text-gray-400 mb-1">Booking Reference</div>
-                <div className="text-lg font-mono text-white">SKY{Math.random().toString(36).substr(2, 6).toUpperCase()}</div>
+                <div className="text-sm text-gray-400 mb-1">
+                  Booking Reference
+                </div>
+                <div className="text-lg font-mono text-white">
+                  SKY{Math.random().toString(36).substr(2, 6).toUpperCase()}
+                </div>
               </div>
               <button
                 onClick={handleClose}

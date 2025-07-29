@@ -34,10 +34,32 @@ export type FlightSearchParams = {
   adults?: number
   children?: number
   infants?: number
-  cabinClass?: 'economy' | 'premium_economy' | 'business' | 'first'
-  sortBy?: 'best' | 'cheapest' | 'fastest'
+  cabinClass?: CabinClass
+  sortBy?: SortOption
   currency?: string
   market?: string
+  countryCode?: string
+  locale?: string
+}
+
+// New types for flight booking API
+export type FlightBookingLeg = {
+  origin: string
+  destination: string
+  date: string
+}
+
+export type FlightBookingParams = {
+  itineraryId: string
+  legs: Array<FlightBookingLeg>
+  sessionId: string
+  adults?: number
+  children?: number
+  infants?: number
+  currency?: string
+  locale?: string
+  market?: string
+  cabinClass?: CabinClass
   countryCode?: string
 }
 
@@ -161,4 +183,23 @@ export type PassengerCounts = {
   adults: number
   children: number
   infants: number
+}
+
+export type MultiCitySegment = {
+  id: string
+  origin: Airport | null
+  destination: Airport | null
+  date: string
+}
+
+export type MultiCitySearchParams = {
+  segments: Array<MultiCitySegment>
+  adults?: number
+  children?: number
+  infants?: number
+  cabinClass?: CabinClass
+  sortBy?: SortOption
+  currency?: string
+  market?: string
+  countryCode?: string
 }
