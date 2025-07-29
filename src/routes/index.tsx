@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { FlightSearch } from '../components/FlightSearch'
+import { FlightSearch } from '../components/FlightSearch.tsx'
 
 export const Route = createFileRoute('/')({
   component: FlightsApp,

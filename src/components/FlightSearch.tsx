@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRightLeft, SearchIcon } from 'lucide-react'
 import { flightService } from '../services/flight.service'
-import { AirportSelector } from './AirportSelector'
-import { DateSelector } from './DateSelector'
-import { PassengerSelector } from './PassengerSelector'
-import { FlightResults } from './FlightResults'
+import { AirportSelector } from './AirportSelector.tsx'
+import { DateSelector } from './DateSelector.tsx'
+import { PassengerSelector } from './PassengerSelector.tsx'
+import { FlightResults } from './FlightResults.tsx'
 import type {
   Airport,
   CabinClass,
@@ -113,10 +113,11 @@ export function FlightSearch() {
       </div>
 
       {/* Search Form */}
-      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4">
+        {/* From/To Row */}
+        <div className="grid grid-cols-2 gap-4 items-end">
           {/* Origin */}
-          <div className="sm:col-span-1 lg:col-span-3">
+          <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               From
             </label>
@@ -127,19 +128,8 @@ export function FlightSearch() {
             />
           </div>
 
-          {/* Swap Button */}
-          <div className="sm:col-span-2 lg:col-span-1 flex justify-center order-3 sm:order-none">
-            <button
-              onClick={swapAirports}
-              className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
-              aria-label="Swap airports"
-            >
-              <ArrowRightLeft className="w-5 h-5" />
-            </button>
-          </div>
-
           {/* Destination */}
-          <div className="sm:col-span-1 lg:col-span-3">
+          <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               To
             </label>
@@ -149,9 +139,23 @@ export function FlightSearch() {
               placeholder="Where to?"
             />
           </div>
+        </div>
 
+        {/* Swap Button Row */}
+        <div className="flex justify-center">
+          <button
+            onClick={swapAirports}
+            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
+            aria-label="Swap airports"
+          >
+            <ArrowRightLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Dates and Travelers Row */}
+        <div className={`grid gap-4 items-end ${tripType === 'round-trip' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
           {/* Departure Date */}
-          <div className="sm:col-span-1 lg:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Departure
             </label>
@@ -160,7 +164,7 @@ export function FlightSearch() {
 
           {/* Return Date */}
           {tripType === 'round-trip' && (
-            <div className="sm:col-span-1 lg:col-span-2">
+            <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Return
               </label>
@@ -172,10 +176,8 @@ export function FlightSearch() {
             </div>
           )}
 
-          {/* Passengers & Class */}
-          <div
-            className={`sm:col-span-2 ${tripType === 'round-trip' ? 'lg:col-span-1' : 'lg:col-span-3'}`}
-          >
+          {/* Travelers */}
+          <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Travelers
             </label>
@@ -207,7 +209,11 @@ export function FlightSearch() {
           <p className="text-red-300 font-medium mb-2">
             Error searching flights
           </p>
-          <p className="text-red-200 text-sm">{error instanceof Error ? error.message : 'An unexpected error occurred'}</p>
+          <p className="text-red-200 text-sm">
+            {error instanceof Error
+              ? error.message
+              : 'An unexpected error occurred'}
+          </p>
           <p className="text-red-200 text-xs mt-2">
             Please check your API key configuration or try again later
           </p>
