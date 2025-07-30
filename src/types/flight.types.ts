@@ -35,7 +35,7 @@ export type FlightSearchParams = {
   children?: number
   infants?: number
   cabinClass?: CabinClass
-  sortBy?: SortOption
+  sortBy?: 'best' | 'price_high' | 'fastest' | 'outbound_take_off_time' | 'outbound_landing_time' | 'return_take_off_time' | 'return_landing_time'
   currency?: string
   market?: string
   countryCode?: string
@@ -226,6 +226,7 @@ export type FlightDetailsParams = {
     destination: string
     date: string
   }>
+  sessionId: string
   adults?: number
   children?: number
   infants?: number

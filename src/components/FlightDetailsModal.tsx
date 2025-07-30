@@ -15,6 +15,7 @@ type FlightDetailsModalProps = {
   isOpen: boolean
   onClose: () => void
   flight: FlightItinerary
+  sessionId: string
   passengers: PassengerCounts
 }
 
@@ -22,6 +23,7 @@ export function FlightDetailsModal({
   isOpen,
   onClose,
   flight,
+  sessionId,
   passengers,
 }: FlightDetailsModalProps) {
   const {
@@ -44,6 +46,7 @@ export function FlightDetailsModal({
 
     const params: FlightDetailsParams = {
       legs,
+      sessionId,
       adults: passengers.adults,
       children: passengers.children,
       infants: passengers.infants,
@@ -54,7 +57,7 @@ export function FlightDetailsModal({
     }
 
     setDetailsParams(params)
-  }, [flight, passengers])
+  }, [flight, sessionId, passengers])
 
   const {
     data: flightDetails,

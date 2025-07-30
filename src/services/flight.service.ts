@@ -7,6 +7,7 @@ import type {
   FlightDetailsResponse,
   FlightSearchParams,
   FlightSearchResponse,
+  MultiCitySearchParams,
 } from '../types/flight.types'
 
 const API_BASE_URL = 'https://sky-scrapper.p.rapidapi.com/api/v1/flights'
@@ -234,6 +235,79 @@ export const flightService = {
     )
   },
 
+  async searchMultiCityFlights(
+    params: MultiCitySearchParams,
+  ): Promise<FlightSearchResponse> {
+    if (!API_KEY || API_KEY === 'your-rapidapi-key-here') {
+      throw new Error(
+        'API key is required. Please set VITE_RAPIDAPI_KEY in your environment variables.',
+      )
+    }
+
+    return retryWithBackoff(
+      async () => {
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.random() * 1000 + 500),
+        )
+
+        // Transform segments to the format expected by the API
+        const legs = params.segments
+          .filter(segment => segment.origin && segment.destination && segment.date)
+          .map(segment => ({
+            originSkyId: segment.origin!.skyId,
+            destinationSkyId: segment.destination!.skyId,
+            originEntityId: segment.origin!.entityId,
+            destinationEntityId: segment.destination!.entityId,
+            date: segment.date,
+          }))
+
+        if (legs.length < 2) {
+          throw new Error('Multi-city search requires at least 2 flight segments')
+        }
+
+        const queryParams = new URLSearchParams({
+          legs: JSON.stringify(legs),
+          ...(params.adults && { adults: params.adults.toString() }),
+          ...(params.children && { children: params.children.toString() }),
+          ...(params.infants && { infants: params.infants.toString() }),
+          ...(params.cabinClass && { cabinClass: params.cabinClass }),
+          ...(params.sortBy && { sortBy: params.sortBy }),
+          ...(params.currency && { currency: params.currency }),
+          ...(params.market && { market: params.market }),
+          ...(params.countryCode && { countryCode: params.countryCode }),
+        })
+
+        const response = await fetch(
+          `${API_BASE_URL}/searchFlightsMultiStops?${queryParams}`,
+          {
+            method: 'GET',
+            headers: getHeaders(),
+          },
+        )
+
+        if (!response.ok) {
+          throw new Error(
+            `API error: ${response.status} - ${response.statusText}`,
+          )
+        }
+
+        const result = await response.json()
+
+        if (isCaptchaResponse(result)) {
+          throw createCaptchaError(result.message)
+        }
+
+        if (!result.data) {
+          throw new Error('No flight data received from API')
+        }
+
+        return result
+      },
+      2,
+      3000,
+    )
+  },
+
   async bookFlight(params: FlightBookingParams): Promise<any> {
     const apiKey = import.meta.env.VITE_RAPIDAPI_KEY
     if (!apiKey) {
@@ -299,6 +373,7 @@ export const flightService = {
 
         const queryParams = new URLSearchParams({
           legs: JSON.stringify(params.legs),
+          sessionId: params.sessionId,
           ...(params.adults && { adults: params.adults.toString() }),
           ...(params.children && { children: params.children.toString() }),
           ...(params.infants && { infants: params.infants.toString() }),

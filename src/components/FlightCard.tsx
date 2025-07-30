@@ -13,6 +13,7 @@ type FlightCardProps = {
   origin: Airport | null
   destination: Airport | null
   passengers?: PassengerCounts
+  sessionId?: string
 }
 
 export function FlightCard({
@@ -20,6 +21,7 @@ export function FlightCard({
   origin,
   destination,
   passengers = { adults: 1, children: 0, infants: 0 },
+  sessionId,
 }: FlightCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
@@ -145,13 +147,15 @@ export function FlightCard({
                   </>
                 )}
               </button>
-              <button
-                onClick={() => setIsDetailsModalOpen(true)}
-                className="flex items-center gap-1 px-3 py-2 text-sm text-gray-300 hover:text-white border border-gray-600 hover:border-gray-500 rounded-lg transition-colors"
-              >
-                <Info className="w-4 h-4" />
-                View Details
-              </button>
+              {sessionId && (
+                <button
+                  onClick={() => setIsDetailsModalOpen(true)}
+                  className="flex items-center gap-1 px-3 py-2 text-sm text-gray-300 hover:text-white border border-gray-600 hover:border-gray-500 rounded-lg transition-colors"
+                >
+                  <Info className="w-4 h-4" />
+                  View Details
+                </button>
+              )}
               <button
                 onClick={() => setIsBookingModalOpen(true)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -277,12 +281,15 @@ export function FlightCard({
         passengers={passengers}
       />
 
-      <FlightDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-        flight={itinerary}
-        passengers={passengers}
-      />
+      {sessionId && (
+        <FlightDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          flight={itinerary}
+          sessionId={sessionId}
+          passengers={passengers}
+        />
+      )}
     </div>
   )
 }
