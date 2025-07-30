@@ -35,7 +35,14 @@ export type FlightSearchParams = {
   children?: number
   infants?: number
   cabinClass?: CabinClass
-  sortBy?: 'best' | 'price_high' | 'fastest' | 'outbound_take_off_time' | 'outbound_landing_time' | 'return_take_off_time' | 'return_landing_time'
+  sortBy?:
+    | 'best'
+    | 'price_high'
+    | 'fastest'
+    | 'outbound_take_off_time'
+    | 'outbound_landing_time'
+    | 'return_take_off_time'
+    | 'return_landing_time'
   currency?: string
   market?: string
   countryCode?: string
@@ -218,154 +225,4 @@ export type MultiCitySearchParams = {
   currency?: string
   market?: string
   countryCode?: string
-}
-
-export type FlightDetailsParams = {
-  legs: Array<{
-    origin: string
-    destination: string
-    date: string
-  }>
-  sessionId: string
-  adults?: number
-  children?: number
-  infants?: number
-  currency?: string
-  locale?: string
-  market?: string
-  cabinClass?: CabinClass
-  countryCode?: string
-}
-
-export type FlightDetailsResponse = {
-  status: boolean
-  timestamp: number
-  data: {
-    itinerary: {
-      legs: Array<{
-        id: string
-        origin: {
-          id: string
-          name: string
-          displayCode: string
-          city: string
-        }
-        destination: {
-          id: string
-          name: string
-          displayCode: string
-          city: string
-        }
-        segments: Array<{
-          id: string
-          origin: {
-            id: string
-            name: string
-            displayCode: string
-            city: string
-          }
-          destination: {
-            id: string
-            name: string
-            displayCode: string
-            city: string
-          }
-          duration: number
-          dayChange: number
-          flightNumber: string
-          departure: string
-          arrival: string
-          marketingCarrier: {
-            id: string
-            name: string
-            displayCode: string
-            displayCodeType: string
-            logo: string
-            altId: string
-          }
-          operatingCarrier: {
-            id: string
-            name: string
-            displayCode: string
-            displayCodeType: string
-            logo: string
-            altId: string
-          }
-        }>
-        duration: number
-        stopCount: number
-        departure: string
-        arrival: string
-        dayChange: number
-      }>
-      pricingOptions: Array<{
-        agents: Array<{
-          id: string
-          name: string
-          isCarrier: boolean
-          bookingProposition: string
-          url: string
-          price: number
-          rating: {
-            value: number
-            count: number
-          }
-          updateStatus: string
-          segments: Array<{
-            id: string
-            origin: {
-              id: string
-              name: string
-              displayCode: string
-              city: string
-            }
-            destination: {
-              id: string
-              name: string
-              displayCode: string
-              city: string
-            }
-            duration: number
-            dayChange: number
-            flightNumber: string
-            departure: string
-            arrival: string
-            marketingCarrier: {
-              id: string
-              name: string
-              displayCode: string
-              displayCodeType: string
-              logo: string
-              altId: string
-            }
-            operatingCarrier: {
-              id: string
-              name: string
-              displayCode: string
-              displayCodeType: string
-              logo: string
-              altId: string
-            }
-          }>
-          isDirectDBookUrl: boolean
-          quoteAge: number
-        }>
-        totalPrice: number
-      }>
-      isTransferRequired: boolean
-      destinationImage?: string
-      operatingCarrierSafetyAttributes?: Array<{
-        carrierID: string
-        carrierName: string
-        faceMasksCompulsory: boolean | null
-        aircraftDeepCleanedDaily: boolean | null
-        attendantsWearPPE: boolean | null
-        cleaningPacksProvided: boolean | null
-        foodServiceChanges: boolean | null
-        safetyUrl: string | null
-      }>
-      flexibleTicketPolicies?: Array<any>
-    }
-    pollingCompleted: boolean
-  }
 }

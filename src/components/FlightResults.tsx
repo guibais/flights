@@ -97,7 +97,6 @@ export function FlightResults({ results, isLoading, origin, destination, passeng
             origin={origin}
             destination={destination}
             passengers={passengers}
-            sessionId={results.data?.context?.sessionId}
           />
         ))}
       </div>

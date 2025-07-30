@@ -3,8 +3,6 @@ import type {
   CaptchaError,
   CaptchaResponse,
   FlightBookingParams,
-  FlightDetailsParams,
-  FlightDetailsResponse,
   FlightSearchParams,
   FlightSearchResponse,
   MultiCitySearchParams,
@@ -356,61 +354,6 @@ export const flightService = {
       },
       2,
       2000,
-    )
-  },
-
-  async getFlightDetails(
-    params: FlightDetailsParams,
-  ): Promise<FlightDetailsResponse> {
-    if (!API_KEY || API_KEY === 'your-rapidapi-key-here') {
-      throw new Error(
-        'API key is required. Please set VITE_RAPIDAPI_KEY in your environment variables.',
-      )
-    }
-
-    return retryWithBackoff(
-      async () => {
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.random() * 1000 + 500),
-        )
-
-        const queryParams = new URLSearchParams({
-          legs: JSON.stringify(params.legs),
-          sessionId: params.sessionId,
-          ...(params.adults && { adults: params.adults.toString() }),
-          ...(params.children && { children: params.children.toString() }),
-          ...(params.infants && { infants: params.infants.toString() }),
-          ...(params.currency && { currency: params.currency }),
-          ...(params.locale && { locale: params.locale }),
-          ...(params.market && { market: params.market }),
-          ...(params.cabinClass && { cabinClass: params.cabinClass }),
-          ...(params.countryCode && { countryCode: params.countryCode }),
-        })
-
-        const response = await fetch(
-          `${API_BASE_URL}/getFlightDetails?${queryParams}`,
-          {
-            method: 'GET',
-            headers: getHeaders(),
-          },
-        )
-
-        if (!response.ok) {
-          throw new Error(
-            `API error: ${response.status} - ${response.statusText}`,
-          )
-        }
-
-        const result = await response.json()
-
-        if (isCaptchaResponse(result)) {
-          throw createCaptchaError(result.message)
-        }
-
-        return result
-      },
-      2,
-      3000,
     )
   },
 }

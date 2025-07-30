@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Info, Plane } from 'lucide-react'
+import { ChevronDown, ChevronUp, Plane } from 'lucide-react'
 import { FlightBookingModal } from './FlightBookingModal'
-import { FlightDetailsModal } from './FlightDetailsModal'
 import type {
   Airport,
   FlightItinerary,
@@ -13,7 +12,6 @@ type FlightCardProps = {
   origin: Airport | null
   destination: Airport | null
   passengers?: PassengerCounts
-  sessionId?: string
 }
 
 export function FlightCard({
@@ -21,11 +19,9 @@ export function FlightCard({
   origin,
   destination,
   passengers = { adults: 1, children: 0, infants: 0 },
-  sessionId,
 }: FlightCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
@@ -52,12 +48,12 @@ export function FlightCard({
 
   const renderLegSummary = (leg: typeof mainLeg) => (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-1">
         <div className="flex-shrink-0">
           {leg.carriers.marketing[0]?.logoUrl ? (
             <img
               src={leg.carriers.marketing[0].logoUrl}
-              alt={leg.carriers.marketing[0].name}
+              alt={leg.carriers.marketing[0]?.name}
               className="w-8 h-8 rounded"
             />
           ) : (
@@ -67,41 +63,41 @@ export function FlightCard({
           )}
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="text-center">
-            <div className="text-lg font-semibold">
+        <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
+          <div className="text-center flex-shrink-0">
+            <div className="text-sm sm:text-lg font-semibold">
               {formatTime(leg.departure)}
             </div>
-            <div className="text-sm text-gray-400">
+            <div className="text-xs sm:text-sm text-gray-400">
               {leg.origin.displayCode}
             </div>
           </div>
 
-          <div className="flex flex-col items-center text-gray-400">
-            <div className="text-xs mb-1">
+          <div className="flex flex-col items-center text-gray-400 flex-1 min-w-0">
+            <div className="text-xs mb-1 whitespace-nowrap">
               {formatDuration(leg.durationInMinutes)}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-              <div className="w-16 h-px bg-gray-400"></div>
-              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+            <div className="flex items-center gap-1 sm:gap-2 w-full max-w-12 sm:max-w-20">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
+              <div className="flex-1 h-px bg-gray-400"></div>
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
             </div>
-            <div className="text-xs mt-1">{getStopsText(leg.stopCount)}</div>
+            <div className="text-xs mt-1 whitespace-nowrap">{getStopsText(leg.stopCount)}</div>
           </div>
 
-          <div className="text-center">
-            <div className="text-lg font-semibold">
+          <div className="text-center flex-shrink-0">
+            <div className="text-sm sm:text-lg font-semibold">
               {formatTime(leg.arrival)}
             </div>
-            <div className="text-sm text-gray-400">
+            <div className="text-xs sm:text-sm text-gray-400">
               {leg.destination.displayCode}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="text-right text-sm text-gray-400">
-        <div>{leg.carriers.marketing[0]?.name}</div>
+      <div className="text-right text-sm text-gray-400 ml-4 w-32 flex-shrink-0">
+        <div className="truncate">{leg.carriers.marketing[0]?.name}</div>
         {leg.timeDeltaInDays > 0 && (
           <div className="text-xs text-orange-400">
             +{leg.timeDeltaInDays} day
@@ -113,8 +109,8 @@ export function FlightCard({
 
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-      <div className="p-6">
-        <div className="flex justify-between items-start">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div className="flex-1 space-y-4">
             {renderLegSummary(mainLeg)}
 
@@ -125,11 +121,13 @@ export function FlightCard({
             )}
           </div>
 
-          <div className="ml-6 text-right">
-            <div className="text-2xl font-bold text-green-400 mb-1">
-              {itinerary.price.formatted}
+          <div className="sm:ml-6 sm:text-right flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end">
+            <div className="sm:mb-3">
+              <div className="text-xl sm:text-2xl font-bold text-green-400 mb-1">
+                {itinerary.price.formatted}
+              </div>
+              <div className="text-sm text-gray-400">per person</div>
             </div>
-            <div className="text-sm text-gray-400 mb-3">per person</div>
             <div className="flex gap-2">
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -138,24 +136,16 @@ export function FlightCard({
                 {isExpanded ? (
                   <>
                     <ChevronUp className="w-4 h-4" />
-                    Hide details
+                    <span className="hidden sm:inline">Hide details</span>
                   </>
                 ) : (
                   <>
                     <ChevronDown className="w-4 h-4" />
-                    Show details
+                    <span className="hidden sm:inline">Show details</span>
                   </>
                 )}
               </button>
-              {sessionId && (
-                <button
-                  onClick={() => setIsDetailsModalOpen(true)}
-                  className="flex items-center gap-1 px-3 py-2 text-sm text-gray-300 hover:text-white border border-gray-600 hover:border-gray-500 rounded-lg transition-colors"
-                >
-                  <Info className="w-4 h-4" />
-                  View Details
-                </button>
-              )}
+
               <button
                 onClick={() => setIsBookingModalOpen(true)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -181,42 +171,44 @@ export function FlightCard({
         </div>
 
         {isExpanded && (
-          <div className="mt-4 space-y-6">
+          <div className="mt-4 space-y-4 sm:space-y-6">
             {itinerary.legs.map((leg, legIndex) => (
-              <div key={leg.id} className="bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-4">
+              <div key={leg.id} className="bg-gray-900 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
                   <Plane className="w-4 h-4 text-blue-400" />
-                  <span className="font-medium">
+                  <span className="font-medium text-sm sm:text-base">
                     {legIndex === 0 ? 'Outbound' : 'Return'} •{' '}
                     {formatDuration(leg.durationInMinutes)}
                   </span>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {leg.segments.map((segment, segmentIndex) => (
-                    <div key={segment.id} className="flex items-start gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                    <div key={segment.id} className="flex items-start gap-3 sm:gap-4">
+                      <div className="flex flex-col items-center flex-shrink-0">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-400"></div>
                         {segmentIndex < leg.segments.length - 1 && (
-                          <div className="w-px h-16 bg-gray-600 my-2"></div>
+                          <div className="w-px h-12 sm:h-16 bg-gray-600 my-2"></div>
                         )}
                       </div>
 
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <div className="font-medium">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm sm:text-base">
                               {formatTime(segment.departure)} -{' '}
                               {formatTime(segment.arrival)}
                             </div>
-                            <div className="text-sm text-gray-400">
-                              {segment.origin.name} (
-                              {segment.origin.displayCode}) →{' '}
-                              {segment.destination.name} (
-                              {segment.destination.displayCode})
+                            <div className="text-xs sm:text-sm text-gray-400">
+                              <div className="truncate">
+                                {segment.origin.name} ({segment.origin.displayCode})
+                              </div>
+                              <div className="truncate">
+                                → {segment.destination.name} ({segment.destination.displayCode})
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right text-sm">
+                          <div className="text-left sm:text-right text-xs sm:text-sm flex-shrink-0">
                             <div className="text-gray-400">
                               {formatDuration(segment.durationInMinutes)}
                             </div>
@@ -226,18 +218,18 @@ export function FlightCard({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+                          <div className="flex items-center gap-2 min-w-0">
                             {segment.marketingCarrier.logoUrl ? (
                               <img
                                 src={segment.marketingCarrier.logoUrl}
                                 alt={segment.marketingCarrier.name}
-                                className="w-5 h-5 rounded"
+                                className="w-4 h-4 sm:w-5 sm:h-5 rounded flex-shrink-0"
                               />
                             ) : (
-                              <Plane className="w-4 h-4" />
+                              <Plane className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                             )}
-                            <span>{segment.marketingCarrier.name}</span>
+                            <span className="truncate">{segment.marketingCarrier.name}</span>
                           </div>
                         </div>
                       </div>
@@ -247,20 +239,20 @@ export function FlightCard({
               </div>
             ))}
 
-            <div className="bg-gray-900 rounded-lg p-4">
-              <h4 className="font-medium mb-3">Fare information</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-400">Changes:</span>
-                  <span className="ml-2">
+            <div className="bg-gray-900 rounded-lg p-3 sm:p-4">
+              <h4 className="font-medium mb-3 text-sm sm:text-base">Fare information</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <span className="text-gray-400 mb-1 sm:mb-0">Changes:</span>
+                  <span className="sm:ml-2">
                     {itinerary.farePolicy.isChangeAllowed
                       ? 'Allowed'
                       : 'Not allowed'}
                   </span>
                 </div>
-                <div>
-                  <span className="text-gray-400">Cancellation:</span>
-                  <span className="ml-2">
+                <div className="flex flex-col sm:flex-row sm:items-center">
+                  <span className="text-gray-400 mb-1 sm:mb-0">Cancellation:</span>
+                  <span className="sm:ml-2">
                     {itinerary.farePolicy.isCancellationAllowed
                       ? 'Allowed'
                       : 'Not allowed'}
@@ -280,16 +272,6 @@ export function FlightCard({
         destination={destination}
         passengers={passengers}
       />
-
-      {sessionId && (
-        <FlightDetailsModal
-          isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
-          flight={itinerary}
-          sessionId={sessionId}
-          passengers={passengers}
-        />
-      )}
     </div>
   )
 }
