@@ -66,6 +66,37 @@ const serializeSearchParams = (
   }
 }
 
+const reconstructAirportFromUrl = (
+  skyId: string,
+  entityId: string,
+  name: string,
+  type: 'AIRPORT' | 'CITY',
+): Airport => ({
+  skyId,
+  entityId,
+  presentation: {
+    title: name,
+    suggestionTitle: name,
+    subtitle: type === 'AIRPORT' ? 'Airport' : 'City',
+  },
+  navigation: {
+    entityId,
+    entityType: type,
+    localizedName: name,
+    relevantFlightParams: {
+      skyId,
+      entityId,
+      flightPlaceType: type,
+      localizedName: name,
+    },
+    relevantHotelParams: {
+      entityId,
+      entityType: type,
+      localizedName: name,
+    },
+  },
+})
+
 const deserializeSearchParams = (
   urlParams: Record<string, any>,
 ): FlightSearchParams | MultiCitySearchParams | null => {
@@ -188,6 +219,37 @@ export function FlightSearch() {
         if (searchParams.returnDate) {
           setReturnDate(searchParams.returnDate)
         }
+
+        const params = urlSearchParams as any
+        if (
+          params.originSkyId &&
+          params.originEntityId &&
+          params.originName &&
+          params.originType
+        ) {
+          const originAirport = reconstructAirportFromUrl(
+            params.originSkyId,
+            params.originEntityId,
+            params.originName,
+            params.originType as 'AIRPORT' | 'CITY',
+          )
+          setOrigin(originAirport)
+        }
+
+        if (
+          params.destinationSkyId &&
+          params.destinationEntityId &&
+          params.destinationName &&
+          params.destinationType
+        ) {
+          const destinationAirport = reconstructAirportFromUrl(
+            params.destinationSkyId,
+            params.destinationEntityId,
+            params.destinationName,
+            params.destinationType as 'AIRPORT' | 'CITY',
+          )
+          setDestination(destinationAirport)
+        }
       }
       setPassengers({
         adults: searchParams.adults || 1,
@@ -196,7 +258,7 @@ export function FlightSearch() {
       })
       setCabinClass(searchParams.cabinClass as CabinClass)
     }
-  }, [searchParams])
+  }, [searchParams, urlSearchParams])
 
   const tripTypeOptions = useMemo(
     () => ['round-trip', 'one-way', 'multi-city'] as const,
@@ -302,7 +364,14 @@ export function FlightSearch() {
     }
 
     const serializedParams = serializeSearchParams(params)
-    navigate({ to: '/', search: serializedParams })
+    const paramsWithAirportData = {
+      ...serializedParams,
+      originName: origin.presentation.title,
+      destinationName: destination.presentation.title,
+      originType: origin.navigation.entityType,
+      destinationType: destination.navigation.entityType,
+    }
+    navigate({ to: '/', search: paramsWithAirportData })
   }, [
     tripType,
     multiCitySegments,
