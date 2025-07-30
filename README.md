@@ -3,7 +3,8 @@
 A modern flight search application built with React, TypeScript, and the Sky Scrapper API. Features a dark theme interface similar to Google Flights with real-time flight search capabilities.
 
 <img width="437" height="381" alt="image" src="https://github.com/user-attachments/assets/0e71ac08-a75c-4989-95c1-986c615833ae" />
-<img width="437" height="384" alt="image" src="https://github.com/user-attachments/assets/37e95761-b00e-4303-8919-66a7468f2605" />
+<img width="437" height="384" alt="image" src="https://github.com/user-attachments/assets/d9207249-c533-48b4-baa4-ccb89709ae08" />
+
 
 
 
