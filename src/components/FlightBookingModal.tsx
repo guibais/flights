@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, Check, CreditCard, Plane, Users, X } from 'lucide-react'
+import { Check, CreditCard, Plane, Users, X } from 'lucide-react'
 import type { Airport, FlightItinerary } from '../types/flight.types'
 
 type FlightBookingModalProps = {
@@ -15,12 +15,9 @@ export function FlightBookingModal({
   isOpen,
   onClose,
   itinerary,
-  origin,
-  destination,
   passengers,
 }: FlightBookingModalProps) {
   const [step, setStep] = useState<'review' | 'booking' | 'success'>('review')
-  const [isProcessing, setIsProcessing] = useState(false)
 
   if (!isOpen) return null
 
@@ -53,18 +50,15 @@ export function FlightBookingModal({
     totalPassengers
 
   const handleBookFlight = async () => {
-    setIsProcessing(true)
     setStep('booking')
 
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     setStep('success')
-    setIsProcessing(false)
   }
 
   const handleClose = () => {
     setStep('review')
-    setIsProcessing(false)
     onClose()
   }
 

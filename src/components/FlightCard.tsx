@@ -46,66 +46,74 @@ export function FlightCard({
   const mainLeg = itinerary.legs[0]
   const returnLeg = itinerary.legs[1]
 
-  const renderLegSummary = (leg: typeof mainLeg) => (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="flex-shrink-0">
-          {leg.carriers.marketing[0]?.logoUrl ? (
-            <img
-              src={leg.carriers.marketing[0].logoUrl}
-              alt={leg.carriers.marketing[0]?.name}
-              className="w-8 h-8 rounded"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center">
-              <Plane className="w-4 h-4" />
+  const renderLegSummary = (leg: typeof mainLeg) => {
+    if (!leg || !leg.carriers || !leg.carriers.marketing) {
+      return null
+    }
+
+    return (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex-shrink-0">
+            {leg.carriers.marketing[0]?.logoUrl ? (
+              <img
+                src={leg.carriers.marketing[0].logoUrl}
+                alt={leg.carriers.marketing[0]?.name}
+                className="w-8 h-8 rounded"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center">
+                <Plane className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
+            <div className="text-center flex-shrink-0">
+              <div className="text-sm sm:text-lg font-semibold">
+                {formatTime(leg.departure)}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-400">
+                {leg.origin.displayCode}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center text-gray-400 flex-1 min-w-0">
+              <div className="text-xs mb-1 whitespace-nowrap">
+                {formatDuration(leg.durationInMinutes)}
+              </div>
+              <div className="flex items-center gap-1 sm:gap-2 w-full max-w-12 sm:max-w-20">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
+                <div className="flex-1 h-px bg-gray-400"></div>
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
+              </div>
+              <div className="text-xs mt-1 whitespace-nowrap">
+                {getStopsText(leg.stopCount)}
+              </div>
+            </div>
+
+            <div className="text-center flex-shrink-0">
+              <div className="text-sm sm:text-lg font-semibold">
+                {formatTime(leg.arrival)}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-400">
+                {leg.destination.displayCode}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-right text-sm text-gray-400 ml-4 w-32 flex-shrink-0">
+          <div className="truncate">{leg.carriers.marketing[0]?.name}</div>
+          {leg.timeDeltaInDays > 0 && (
+            <div className="text-xs text-orange-400">
+              +{leg.timeDeltaInDays} day
             </div>
           )}
         </div>
-
-        <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
-          <div className="text-center flex-shrink-0">
-            <div className="text-sm sm:text-lg font-semibold">
-              {formatTime(leg.departure)}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-400">
-              {leg.origin.displayCode}
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center text-gray-400 flex-1 min-w-0">
-            <div className="text-xs mb-1 whitespace-nowrap">
-              {formatDuration(leg.durationInMinutes)}
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2 w-full max-w-12 sm:max-w-20">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
-              <div className="flex-1 h-px bg-gray-400"></div>
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
-            </div>
-            <div className="text-xs mt-1 whitespace-nowrap">{getStopsText(leg.stopCount)}</div>
-          </div>
-
-          <div className="text-center flex-shrink-0">
-            <div className="text-sm sm:text-lg font-semibold">
-              {formatTime(leg.arrival)}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-400">
-              {leg.destination.displayCode}
-            </div>
-          </div>
-        </div>
       </div>
-
-      <div className="text-right text-sm text-gray-400 ml-4 w-32 flex-shrink-0">
-        <div className="truncate">{leg.carriers.marketing[0]?.name}</div>
-        {leg.timeDeltaInDays > 0 && (
-          <div className="text-xs text-orange-400">
-            +{leg.timeDeltaInDays} day
-          </div>
-        )}
-      </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
@@ -184,7 +192,10 @@ export function FlightCard({
 
                 <div className="space-y-3 sm:space-y-4">
                   {leg.segments.map((segment, segmentIndex) => (
-                    <div key={segment.id} className="flex items-start gap-3 sm:gap-4">
+                    <div
+                      key={segment.id}
+                      className="flex items-start gap-3 sm:gap-4"
+                    >
                       <div className="flex flex-col items-center flex-shrink-0">
                         <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-400"></div>
                         {segmentIndex < leg.segments.length - 1 && (
@@ -201,10 +212,12 @@ export function FlightCard({
                             </div>
                             <div className="text-xs sm:text-sm text-gray-400">
                               <div className="truncate">
-                                {segment.origin.name} ({segment.origin.displayCode})
+                                {segment.origin.name} (
+                                {segment.origin.displayCode})
                               </div>
                               <div className="truncate">
-                                → {segment.destination.name} ({segment.destination.displayCode})
+                                → {segment.destination.name} (
+                                {segment.destination.displayCode})
                               </div>
                             </div>
                           </div>
@@ -229,7 +242,9 @@ export function FlightCard({
                             ) : (
                               <Plane className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                             )}
-                            <span className="truncate">{segment.marketingCarrier.name}</span>
+                            <span className="truncate">
+                              {segment.marketingCarrier.name}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -240,7 +255,9 @@ export function FlightCard({
             ))}
 
             <div className="bg-gray-900 rounded-lg p-3 sm:p-4">
-              <h4 className="font-medium mb-3 text-sm sm:text-base">Fare information</h4>
+              <h4 className="font-medium mb-3 text-sm sm:text-base">
+                Fare information
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center">
                   <span className="text-gray-400 mb-1 sm:mb-0">Changes:</span>
@@ -251,7 +268,9 @@ export function FlightCard({
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="text-gray-400 mb-1 sm:mb-0">Cancellation:</span>
+                  <span className="text-gray-400 mb-1 sm:mb-0">
+                    Cancellation:
+                  </span>
                   <span className="sm:ml-2">
                     {itinerary.farePolicy.isCancellationAllowed
                       ? 'Allowed'

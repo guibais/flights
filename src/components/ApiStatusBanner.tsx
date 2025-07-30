@@ -1,4 +1,4 @@
-import { AlertTriangle, Shield, CheckCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Shield } from 'lucide-react'
 
 type ApiStatusBannerProps = {
   isDemo: boolean
@@ -11,9 +11,7 @@ export function ApiStatusBanner({ isDemo, hasError }: ApiStatusBannerProps) {
       <div className="bg-green-900/30 border border-green-700/50 rounded-lg p-4 mb-6">
         <div className="flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-green-400" />
-          <p className="text-green-300 font-medium">
-            API Conectada
-          </p>
+          <p className="text-green-300 font-medium">API Conectada</p>
         </div>
         <p className="text-green-200 text-sm mt-1">
           Buscando voos reais através da Sky Scrapper API.
@@ -32,8 +30,8 @@ export function ApiStatusBanner({ isDemo, hasError }: ApiStatusBannerProps) {
               API Bloqueada por Segurança
             </p>
             <p className="text-amber-200 text-sm mt-1 mb-3">
-              A API Sky Scrapper ativou proteção CAPTCHA devido ao volume de requisições. 
-              Isso é normal e esperado ao usar APIs de terceiros.
+              A API Sky Scrapper ativou proteção CAPTCHA devido ao volume de
+              requisições. Isso é normal e esperado ao usar APIs de terceiros.
             </p>
             <div className="bg-amber-800/30 rounded-lg p-3">
               <p className="text-amber-100 text-sm font-medium mb-2">
@@ -55,12 +53,11 @@ export function ApiStatusBanner({ isDemo, hasError }: ApiStatusBannerProps) {
     <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-4 mb-6">
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-5 h-5 text-blue-400" />
-        <p className="text-blue-300 font-medium">
-          Modo Demonstração
-        </p>
+        <p className="text-blue-300 font-medium">Modo Demonstração</p>
       </div>
       <p className="text-blue-200 text-sm mt-1">
-        Usando dados simulados. Adicione sua chave RapidAPI para buscar voos reais.
+        Usando dados simulados. Adicione sua chave RapidAPI para buscar voos
+        reais.
       </p>
     </div>
   )

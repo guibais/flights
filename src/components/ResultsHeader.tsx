@@ -1,4 +1,4 @@
-import { Filter, ArrowRight } from 'lucide-react'
+import { ArrowRight, Filter } from 'lucide-react'
 import type { Airport } from '../types/flight.types'
 
 type ResultsHeaderProps = {
@@ -22,7 +22,7 @@ export function ResultsHeader({
         <h2 className="text-2xl font-bold text-white">
           {totalResults.toLocaleString()} flights found
         </h2>
-        
+
         {origin && destination && (
           <div className="flex items-center gap-2 text-gray-400">
             <span>{origin.presentation.title}</span>

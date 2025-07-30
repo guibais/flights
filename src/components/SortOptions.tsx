@@ -8,11 +8,23 @@ type SortOptionsProps = {
 
 const sortOptions = [
   { value: 'best' as const, label: 'Best', description: 'Best overall value' },
-  { value: 'cheapest' as const, label: 'Cheapest', description: 'Lowest price' },
-  { value: 'fastest' as const, label: 'Fastest', description: 'Shortest duration' },
+  {
+    value: 'cheapest' as const,
+    label: 'Cheapest',
+    description: 'Lowest price',
+  },
+  {
+    value: 'fastest' as const,
+    label: 'Fastest',
+    description: 'Shortest duration',
+  },
 ]
 
-export function SortOptions({ sortBy, onSortChange, resultsCount }: SortOptionsProps) {
+export function SortOptions({
+  sortBy,
+  onSortChange,
+  resultsCount,
+}: SortOptionsProps) {
   return (
     <div className="bg-gray-800 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
@@ -35,10 +47,8 @@ export function SortOptions({ sortBy, onSortChange, resultsCount }: SortOptionsP
             ))}
           </div>
         </div>
-        
-        <div className="text-sm text-gray-400">
-          {resultsCount} results
-        </div>
+
+        <div className="text-sm text-gray-400">{resultsCount} results</div>
       </div>
     </div>
   )
