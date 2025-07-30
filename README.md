@@ -2,7 +2,7 @@
 
 A modern flight search application built with React, TypeScript, and the Sky Scrapper API. Features a dark theme interface similar to Google Flights with real-time flight search capabilities.
 
-![Flight Search Interface](https://via.placeholder.com/800x400/1f2937/ffffff?text=SkySearch+Flight+Interface)
+![Flight Search Interface](___)
 
 ## ✈️ Features
 
@@ -26,7 +26,7 @@ A modern flight search application built with React, TypeScript, and the Sky Scr
 
 ## 📋 Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - RapidAPI account for Sky Scrapper API access
 
@@ -46,7 +46,7 @@ npm install
 2. Subscribe to [Sky Scrapper API](https://rapidapi.com/apiheya/api/sky-scrapper)
 3. Copy your API key
 
-5. **Open your browser**
+4. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 🔧 Configuration
@@ -62,41 +62,6 @@ npm install
    ```env
    VITE_RAPIDAPI_KEY=your_rapidapi_key_here
    ```
-
-### Demo Mode
-
-The app automatically enters demo mode when:
-- No API key is provided
-- API key is invalid
-- API requests fail
-
-Demo mode uses realistic mock data for testing the interface.
-
-## 📁 Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── AirportSelector.tsx
-│   ├── DateSelector.tsx
-│   ├── FlightCard.tsx
-│   ├── FlightResults.tsx
-│   ├── FlightSearch.tsx
-│   ├── Header.tsx
-│   ├── LoadingSpinner.tsx
-│   ├── PassengerSelector.tsx
-│   └── SortOptions.tsx
-├── data/               # Mock data for demo mode
-│   └── mock-flight-data.ts
-├── hooks/              # Custom React hooks
-│   └── useDebounce.ts
-├── services/           # API services
-│   └── flight.service.ts
-├── types/              # TypeScript type definitions
-│   └── flight.types.ts
-└── routes/             # TanStack Router routes
-    └── index.tsx
-```
 
 ## 🎯 Usage Guide
 
@@ -117,7 +82,9 @@ The app integrates with Sky Scrapper API endpoints:
 ## 🎨 UI Components
 
 ### FlightSearch
+
 Main search interface with:
+
 - Trip type selection (round-trip, one-way, multi-city)
 - Origin/destination airport selectors with swap functionality
 - Date pickers for departure and return
@@ -125,14 +92,18 @@ Main search interface with:
 - Search button with loading states
 
 ### AirportSelector
+
 Intelligent airport search with:
+
 - Real-time API search (minimum 2 characters)
 - Dropdown with airport details
 - Visual indicators for airports vs cities
 - Keyboard navigation support
 
 ### FlightResults
+
 Comprehensive results display:
+
 - Sorting options (best, cheapest, fastest)
 - Flight cards with airline logos
 - Expandable details with full itinerary
@@ -140,9 +111,9 @@ Comprehensive results display:
 
 ## 🔒 Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `VITE_RAPIDAPI_KEY` | Your RapidAPI key for Sky Scrapper | Yes |
+| Variable            | Description                        | Required |
+| ------------------- | ---------------------------------- | -------- |
+| `VITE_RAPIDAPI_KEY` | Your RapidAPI key for Sky Scrapper | Yes      |
 
 ## 🤝 Contributing
 
