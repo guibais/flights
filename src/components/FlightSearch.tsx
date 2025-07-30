@@ -237,14 +237,6 @@ export function FlightSearch() {
     }
   }, [searchParams, showCaptcha])
 
-  const retryFn = useCallback((failureCount: number, retryError: Error) => {
-    const captchaError = retryError as CaptchaError
-    if (captchaError.captchaData) {
-      return false
-    }
-    return failureCount < 1
-  }, [])
-
   const {
     data: flightResults,
     isLoading: isSearching,
@@ -254,7 +246,8 @@ export function FlightSearch() {
     queryKey: ['flights', searchParams],
     queryFn,
     enabled: !!searchParams,
-    retry: retryFn,
+    retry: false,
+    staleTime: 30 * 60 * 1000,
   })
 
   const handleSearch = useCallback(() => {
@@ -335,13 +328,13 @@ export function FlightSearch() {
         destination={destination}
         searchParams={searchParams}
       />
-      
+
       <main role="main">
         <section aria-labelledby="search-heading">
           <h2 id="search-heading" className="sr-only">
             Flight Search Form
           </h2>
-          
+
           <div className="mb-6">
             <fieldset>
               <legend className="sr-only">Trip Type Selection</legend>
@@ -364,111 +357,117 @@ export function FlightSearch() {
             </fieldset>
           </div>
 
-          <form className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-        {tripType === 'multi-city' ? (
-          <div className="space-y-4">
-            <MultiCitySegments
-              segments={multiCitySegments}
-              onSegmentsChange={setMultiCitySegments}
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Travelers
-              </label>
-              <PassengerSelector
-                passengers={passengers}
-                onPassengersChange={setPassengers}
-                cabinClass={cabinClass}
-                onCabinClassChange={setCabinClass}
-              />
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 items-end">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  From
-                </label>
-                <AirportSelector
-                  value={origin}
-                  onChange={setOrigin}
-                  placeholder="Where from?"
+          <form
+            className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSearch()
+            }}
+          >
+            {tripType === 'multi-city' ? (
+              <div className="space-y-4">
+                <MultiCitySegments
+                  segments={multiCitySegments}
+                  onSegmentsChange={setMultiCitySegments}
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  To
-                </label>
-                <AirportSelector
-                  value={destination}
-                  onChange={setDestination}
-                  placeholder="Where to?"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={swapAirports}
-                className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
-                aria-label="Swap airports"
-              >
-                <ArrowRightLeft className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className={gridClassName}>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Departure
-                </label>
-                <DateSelector
-                  value={departureDate}
-                  onChange={setDepartureDate}
-                />
-              </div>
-
-              {tripType === 'round-trip' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Return
+                    Travelers
                   </label>
-                  <DateSelector
-                    value={returnDate}
-                    onChange={setReturnDate}
-                    minDate={departureDate}
+                  <PassengerSelector
+                    passengers={passengers}
+                    onPassengersChange={setPassengers}
+                    cabinClass={cabinClass}
+                    onCabinClassChange={setCabinClass}
                   />
                 </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Travelers
-                </label>
-                <PassengerSelector
-                  passengers={passengers}
-                  onPassengersChange={setPassengers}
-                  cabinClass={cabinClass}
-                  onCabinClassChange={setCabinClass}
-                />
               </div>
-            </div>
-          </>
-        )}
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      From
+                    </label>
+                    <AirportSelector
+                      value={origin}
+                      onChange={setOrigin}
+                      placeholder="Where from?"
+                    />
+                  </div>
 
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={handleSearch}
-            disabled={isSearching}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 sm:px-8 rounded-lg font-medium flex items-center gap-2 transition-colors w-full sm:w-auto"
-          >
-            <SearchIcon className="w-5 h-5" />
-            {isSearching ? 'Searching...' : 'Search flights'}
-          </button>
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      To
+                    </label>
+                    <AirportSelector
+                      value={destination}
+                      onChange={setDestination}
+                      placeholder="Where to?"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <button
+                    onClick={swapAirports}
+                    className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
+                    aria-label="Swap airports"
+                  >
+                    <ArrowRightLeft className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className={gridClassName}>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Departure
+                    </label>
+                    <DateSelector
+                      value={departureDate}
+                      onChange={setDepartureDate}
+                    />
+                  </div>
+
+                  {tripType === 'round-trip' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Return
+                      </label>
+                      <DateSelector
+                        value={returnDate}
+                        onChange={setReturnDate}
+                        minDate={departureDate}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Travelers
+                    </label>
+                    <PassengerSelector
+                      passengers={passengers}
+                      onPassengersChange={setPassengers}
+                      cabinClass={cabinClass}
+                      onCabinClassChange={setCabinClass}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 sm:px-8 rounded-lg font-medium flex items-center gap-2 transition-colors w-full sm:w-auto"
+              >
+                <SearchIcon className="w-5 h-5" />
+                {isSearching ? 'Searching...' : 'Search flights'}
+              </button>
+            </div>
           </form>
         </section>
 
@@ -477,11 +476,16 @@ export function FlightSearch() {
           isMultiCitySearch(searchParams) && (
             <section aria-labelledby="multi-city-info">
               <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
-                <h3 id="multi-city-info" className="text-blue-300 font-medium mb-2">Multi-city Search</h3>
+                <h3
+                  id="multi-city-info"
+                  className="text-blue-300 font-medium mb-2"
+                >
+                  Multi-city Search
+                </h3>
                 <p className="text-blue-200 text-sm">
-                  Searching across {searchParams.segments.length} flight segments
-                  using the multi-city endpoint. Results will include comprehensive
-                  multi-city booking options.
+                  Searching across {searchParams.segments.length} flight
+                  segments using the multi-city endpoint. Results will include
+                  comprehensive multi-city booking options.
                 </p>
               </div>
             </section>
@@ -507,7 +511,9 @@ export function FlightSearch() {
 
         {flightResults?.data && (
           <section aria-labelledby="results-heading">
-            <h2 id="results-heading" className="sr-only">Flight Search Results</h2>
+            <h2 id="results-heading" className="sr-only">
+              Flight Search Results
+            </h2>
             <FlightResults
               results={flightResults}
               isLoading={isSearching}

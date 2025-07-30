@@ -221,25 +221,30 @@ describe('FlightCard', () => {
   })
 
   describe('Booking functionality', () => {
-    it('opens booking modal when select button is clicked', () => {
-      render(<FlightCard {...defaultProps} />)
+    it('calls onBookingModalOpen when select button is clicked', () => {
+      const mockOnBookingModalOpen = jest.fn()
+      
+      render(
+        <FlightCard 
+          {...defaultProps} 
+          onBookingModalOpen={mockOnBookingModalOpen}
+        />
+      )
 
       const selectButton = screen.getByText('Select')
       fireEvent.click(selectButton)
 
-      expect(screen.getByTestId('flight-booking-modal')).toBeVisible()
+      expect(mockOnBookingModalOpen).toHaveBeenCalledWith(mockItinerary)
     })
 
-    it('closes booking modal when close button is clicked', () => {
+    it('does not crash when onBookingModalOpen is not provided', () => {
       render(<FlightCard {...defaultProps} />)
 
       const selectButton = screen.getByText('Select')
-      fireEvent.click(selectButton)
-
-      const closeButton = screen.getByTestId('close-modal')
-      fireEvent.click(closeButton)
-
-      expect(screen.getByTestId('flight-booking-modal')).not.toBeVisible()
+      
+      expect(() => {
+        fireEvent.click(selectButton)
+      }).not.toThrow()
     })
   })
 

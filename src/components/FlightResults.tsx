@@ -1,14 +1,63 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { VariableSizeList as List } from 'react-window'
+import { FlightBookingModal } from './FlightBookingModal'
 import { FlightCard } from './FlightCard'
+import { LoadingSpinner } from './LoadingSpinner'
 import { ResultsHeader } from './ResultsHeader'
 import { SortOptions } from './SortOptions'
-import { LoadingSpinner } from './LoadingSpinner'
 import type {
   Airport,
+  FlightItinerary,
   FlightSearchResponse,
   PassengerCounts,
   SortOption,
 } from '../types/flight.types'
+
+type VirtualizedRowProps = {
+  index: number
+  style: React.CSSProperties
+  data: {
+    itineraries: Array<FlightItinerary>
+    origin: Airport | null
+    destination: Airport | null
+    passengers: PassengerCounts
+    onBookingModalOpen: (itinerary: FlightItinerary) => void
+    onItemExpansion: (itineraryId: string, isExpanded: boolean) => void
+    expandedItems: Set<string>
+  }
+}
+
+const VirtualizedRow = ({ index, style, data }: VirtualizedRowProps) => {
+  const {
+    itineraries,
+    origin,
+    destination,
+    passengers,
+    onBookingModalOpen,
+    onItemExpansion,
+    expandedItems,
+  } = data
+  const itinerary = itineraries[index]
+
+  return (
+    <div style={style}>
+      <div className="pb-4">
+        <FlightCard
+          key={`${itinerary.id}-${index}`}
+          itinerary={itinerary}
+          origin={origin}
+          destination={destination}
+          passengers={passengers}
+          onBookingModalOpen={onBookingModalOpen}
+          onExpansionChange={(isExpanded) =>
+            onItemExpansion(itinerary.id, isExpanded)
+          }
+          isExpanded={expandedItems.has(itinerary.id)}
+        />
+      </div>
+    </div>
+  )
+}
 
 type FlightResultsProps = {
   results: FlightSearchResponse
@@ -27,6 +76,79 @@ export function FlightResults({
 }: FlightResultsProps) {
   const [sortBy, setSortBy] = useState<SortOption>('best')
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedItinerary, setSelectedItinerary] =
+    useState<FlightItinerary | null>(null)
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const listRef = useRef<any>(null)
+  const itemHeights = useRef<Map<number, number>>(new Map())
+
+  const handleBookingModalOpen = (itinerary: FlightItinerary) => {
+    setSelectedItinerary(itinerary)
+    setIsBookingModalOpen(true)
+  }
+
+  const handleBookingModalClose = () => {
+    setIsBookingModalOpen(false)
+    setSelectedItinerary(null)
+  }
+
+  const handleItemExpansion = useCallback(
+    (itineraryId: string, isExpanded: boolean) => {
+      setExpandedItems((prev) => {
+        const newSet = new Set(prev)
+        if (isExpanded) {
+          newSet.add(itineraryId)
+        } else {
+          newSet.delete(itineraryId)
+        }
+        return newSet
+      })
+      if (listRef.current) {
+        itemHeights.current.clear()
+        listRef.current.resetAfterIndex(0)
+      }
+    },
+    [],
+  )
+
+  const getItemSize = useCallback(
+    (index: number) => {
+      const cached = itemHeights.current.get(index)
+      if (cached) return cached
+
+      const baseHeight = 280
+
+      const itineraries = results.data?.itineraries || []
+      const itinerary = itineraries[index]
+      const isExpanded = expandedItems.has(itinerary?.id || '')
+
+      if (!isExpanded) {
+        itemHeights.current.set(index, baseHeight)
+        return baseHeight
+      }
+
+      let expandedHeight = baseHeight
+
+      // Balanced values - not too big, not too small
+      expandedHeight += itinerary.legs.length * 65 // Leg headers
+
+      itinerary.legs.forEach((leg) => {
+        expandedHeight += leg.segments.length * 120 // Segments
+        if (leg.segments.length > 1) {
+          expandedHeight += (leg.segments.length - 1) * 20 // Connection lines
+        }
+      })
+
+      expandedHeight += 100 // Fare policy section
+
+      expandedHeight += 40 // Reasonable buffer
+
+      itemHeights.current.set(index, expandedHeight)
+      return expandedHeight
+    },
+    [expandedItems, results.data?.itineraries],
+  )
 
   if (isLoading) {
     return (
@@ -88,23 +210,46 @@ export function FlightResults({
   }
 
   const itineraries = results.data?.itineraries || []
-  const sortedItineraries =
-    itineraries.length > 0
-      ? [...itineraries].sort((a, b) => {
-          switch (sortBy) {
-            case 'cheapest':
-              return a.price.raw - b.price.raw
-            case 'fastest':
-              return (
-                (a.legs[0]?.durationInMinutes || 0) -
-                (b.legs[0]?.durationInMinutes || 0)
-              )
-            case 'best':
-            default:
-              return b.score - a.score
-          }
-        })
-      : []
+  const sortedItineraries = useMemo(
+    () =>
+      itineraries.length > 0
+        ? [...itineraries].sort((a, b) => {
+            switch (sortBy) {
+              case 'cheapest':
+                return a.price.raw - b.price.raw
+              case 'fastest':
+                return (
+                  (a.legs[0]?.durationInMinutes || 0) -
+                  (b.legs[0]?.durationInMinutes || 0)
+                )
+              case 'best':
+              default:
+                return b.score - a.score
+            }
+          })
+        : [],
+    [itineraries, sortBy],
+  )
+
+  const virtualizedData = useMemo(
+    () => ({
+      itineraries: sortedItineraries,
+      origin,
+      destination,
+      passengers,
+      onBookingModalOpen: handleBookingModalOpen,
+      onItemExpansion: handleItemExpansion,
+      expandedItems,
+    }),
+    [
+      sortedItineraries,
+      origin,
+      destination,
+      passengers,
+      handleItemExpansion,
+      expandedItems,
+    ],
+  )
 
   return (
     <div className="space-y-6">
@@ -122,17 +267,25 @@ export function FlightResults({
         resultsCount={sortedItineraries.length}
       />
 
-      <div className="space-y-4">
-        {sortedItineraries.map((itinerary, index) => (
-          <FlightCard
-            key={`${itinerary.id}-${index}`}
-            itinerary={itinerary}
-            origin={origin}
-            destination={destination}
-            passengers={passengers}
-          />
-        ))}
-      </div>
+      {sortedItineraries.length > 0 ? (
+        <div className="h-[600px] w-full">
+          <List
+            ref={listRef}
+            height={600}
+            width="100%"
+            itemCount={sortedItineraries.length}
+            itemSize={getItemSize}
+            itemData={virtualizedData}
+            overscanCount={5}
+          >
+            {VirtualizedRow}
+          </List>
+        </div>
+      ) : (
+        <div className="text-center py-12 text-gray-400">
+          <p>No flights match your current search criteria.</p>
+        </div>
+      )}
 
       {results.data?.context?.totalResults &&
         sortedItineraries.length < results.data.context.totalResults && (
@@ -146,6 +299,17 @@ export function FlightResults({
             </button>
           </div>
         )}
+
+      {selectedItinerary && (
+        <FlightBookingModal
+          isOpen={isBookingModalOpen}
+          onClose={handleBookingModalClose}
+          itinerary={selectedItinerary}
+          origin={origin}
+          destination={destination}
+          passengers={passengers}
+        />
+      )}
     </div>
   )
 }

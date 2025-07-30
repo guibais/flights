@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Plane } from 'lucide-react'
-import { FlightBookingModal } from './FlightBookingModal'
 import type {
   Airport,
   FlightItinerary,
@@ -12,16 +11,31 @@ type FlightCardProps = {
   origin: Airport | null
   destination: Airport | null
   passengers?: PassengerCounts
+  onBookingModalOpen?: (itinerary: FlightItinerary) => void
+  onExpansionChange?: (isExpanded: boolean) => void
+  isExpanded?: boolean
 }
 
 export function FlightCard({
   itinerary,
-  origin,
-  destination,
-  passengers = { adults: 1, children: 0, infants: 0 },
+  origin: _origin,
+  destination: _destination,
+  passengers: _passengers = { adults: 1, children: 0, infants: 0 },
+  onBookingModalOpen,
+  onExpansionChange,
+  isExpanded: externalIsExpanded,
 }: FlightCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false)
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded
+
+  const toggleExpansion = () => {
+    const newExpanded = !isExpanded
+    if (onExpansionChange) {
+      onExpansionChange(newExpanded)
+    } else {
+      setInternalIsExpanded(newExpanded)
+    }
+  }
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
@@ -138,7 +152,7 @@ export function FlightCard({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={toggleExpansion}
                 className="flex items-center gap-1 px-3 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
               >
                 {isExpanded ? (
@@ -155,7 +169,7 @@ export function FlightCard({
               </button>
 
               <button
-                onClick={() => setIsBookingModalOpen(true)}
+                onClick={() => onBookingModalOpen?.(itinerary)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
               >
                 Select
@@ -166,7 +180,7 @@ export function FlightCard({
 
         <div className="mt-4 pt-4 border-t border-gray-700">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={toggleExpansion}
             className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium"
           >
             Flight details
@@ -283,14 +297,7 @@ export function FlightCard({
         )}
       </div>
 
-      <FlightBookingModal
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
-        itinerary={itinerary}
-        origin={origin}
-        destination={destination}
-        passengers={passengers}
-      />
+
     </div>
   )
 }

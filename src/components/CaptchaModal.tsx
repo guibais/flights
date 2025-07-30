@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 import type { CaptchaResponse } from '../types/flight.types'
 
@@ -18,6 +18,11 @@ export function CaptchaModal({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [captchaHtml, setCaptchaHtml] = useState('')
+
+  const handleClose = useCallback(() => {
+    onClose()
+    window.location.reload()
+  }, [onClose])
 
   useEffect(() => {
     if (isOpen && captchaData.page) {
@@ -89,7 +94,7 @@ export function CaptchaModal({
               <RefreshCw className="w-5 h-5" />
             </button>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 text-gray-400 hover:text-white transition-colors"
               title="Close"
             >
@@ -137,7 +142,7 @@ export function CaptchaModal({
             </div>
             <div className="flex gap-3">
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
               >
                 Cancel
