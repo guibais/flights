@@ -66,36 +66,31 @@ const serializeSearchParams = (
   }
 }
 
-const reconstructAirportFromUrl = (
+const findAirportBySkyId = async (
   skyId: string,
-  entityId: string,
-  name: string,
-  type: 'AIRPORT' | 'CITY',
-): Airport => ({
-  skyId,
-  entityId,
-  presentation: {
-    title: name,
-    suggestionTitle: name,
-    subtitle: type === 'AIRPORT' ? 'Airport' : 'City',
-  },
-  navigation: {
-    entityId,
-    entityType: type,
-    localizedName: name,
-    relevantFlightParams: {
-      skyId,
-      entityId,
-      flightPlaceType: type,
-      localizedName: name,
-    },
-    relevantHotelParams: {
-      entityId,
-      entityType: type,
-      localizedName: name,
-    },
-  },
-})
+  airportName?: string,
+): Promise<Airport | null> => {
+  try {
+    if (airportName) {
+      const nameResults = await flightService.searchAirports(airportName)
+      const exactMatch = nameResults.find((airport) => airport.skyId === skyId)
+      if (exactMatch) return exactMatch
+    }
+
+    const potentialCode = skyId.replace(/-.*$/, '').substring(0, 4)
+    if (potentialCode.length >= 3) {
+      const codeResults = await flightService.searchAirports(potentialCode)
+      const match = codeResults.find((airport) => airport.skyId === skyId)
+      if (match) return match
+    }
+
+    const skyIdResults = await flightService.searchAirports(skyId)
+    return skyIdResults.find((airport) => airport.skyId === skyId) || null
+  } catch (error) {
+    console.warn('Failed to find airport by skyId:', skyId, error)
+    return null
+  }
+}
 
 const deserializeSearchParams = (
   urlParams: Record<string, any>,
@@ -212,7 +207,37 @@ export function FlightSearch() {
     if (searchParams) {
       if (isMultiCitySearch(searchParams)) {
         setTripType('multi-city')
-        setMultiCitySegments(searchParams.segments)
+
+        const reconstructSegments = async () => {
+          const reconstructedSegments = await Promise.all(
+            searchParams.segments.map(async (segment) => {
+              const segmentOrigin = segment.origin?.skyId
+                ? await findAirportBySkyId(
+                    segment.origin.skyId,
+                    segment.origin.presentation?.title,
+                  )
+                : segment.origin
+              const segmentDestination = segment.destination?.skyId
+                ? await findAirportBySkyId(
+                    segment.destination.skyId,
+                    segment.destination.presentation?.title,
+                  )
+                : segment.destination
+
+              return {
+                ...segment,
+                origin: segmentOrigin,
+                destination: segmentDestination,
+              }
+            }),
+          )
+          setMultiCitySegments(reconstructedSegments)
+        }
+
+        reconstructSegments().catch((error) => {
+          console.warn('Failed to reconstruct multi-city airports:', error)
+          setMultiCitySegments(searchParams.segments)
+        })
       } else {
         setTripType(searchParams.returnDate ? 'round-trip' : 'one-way')
         setDepartureDate(searchParams.date)
@@ -221,34 +246,29 @@ export function FlightSearch() {
         }
 
         const params = urlSearchParams as any
-        if (
-          params.originSkyId &&
-          params.originEntityId &&
-          params.originName &&
-          params.originType
-        ) {
-          const originAirport = reconstructAirportFromUrl(
-            params.originSkyId,
-            params.originEntityId,
-            params.originName,
-            params.originType as 'AIRPORT' | 'CITY',
-          )
-          setOrigin(originAirport)
+
+        if (params.originSkyId) {
+          findAirportBySkyId(params.originSkyId, params.originName)
+            .then((airport) => {
+              if (airport) {
+                setOrigin(airport)
+              }
+            })
+            .catch((error) => {
+              console.warn('Failed to load origin airport:', error)
+            })
         }
 
-        if (
-          params.destinationSkyId &&
-          params.destinationEntityId &&
-          params.destinationName &&
-          params.destinationType
-        ) {
-          const destinationAirport = reconstructAirportFromUrl(
-            params.destinationSkyId,
-            params.destinationEntityId,
-            params.destinationName,
-            params.destinationType as 'AIRPORT' | 'CITY',
-          )
-          setDestination(destinationAirport)
+        if (params.destinationSkyId) {
+          findAirportBySkyId(params.destinationSkyId, params.destinationName)
+            .then((airport) => {
+              if (airport) {
+                setDestination(airport)
+              }
+            })
+            .catch((error) => {
+              console.warn('Failed to load destination airport:', error)
+            })
         }
       }
       setPassengers({
@@ -364,14 +384,12 @@ export function FlightSearch() {
     }
 
     const serializedParams = serializeSearchParams(params)
-    const paramsWithAirportData = {
+    const paramsWithNames = {
       ...serializedParams,
       originName: origin.presentation.title,
       destinationName: destination.presentation.title,
-      originType: origin.navigation.entityType,
-      destinationType: destination.navigation.entityType,
     }
-    navigate({ to: '/', search: paramsWithAirportData })
+    navigate({ to: '/', search: paramsWithNames })
   }, [
     tripType,
     multiCitySegments,
