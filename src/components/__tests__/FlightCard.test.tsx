@@ -124,8 +124,8 @@ describe('FlightCard', () => {
     it('displays flight times correctly', () => {
       render(<FlightCard {...defaultProps} />)
 
-      expect(screen.getByText('10:30')).toBeInTheDocument() // departure time
-      expect(screen.getByText('16:30')).toBeInTheDocument() // arrival time
+      expect(screen.getByText('10:30')).toBeInTheDocument()
+      expect(screen.getByText('16:30')).toBeInTheDocument()
     })
 
     it('displays flight duration', () => {

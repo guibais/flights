@@ -10,6 +10,7 @@ import { DateSelector } from './DateSelector.tsx'
 import { FlightResults } from './FlightResults.tsx'
 import { MultiCitySegments } from './MultiCitySegments.tsx'
 import { PassengerSelector } from './PassengerSelector.tsx'
+import { SEO } from './SEO.tsx'
 import type {
   Airport,
   CabinClass,
@@ -329,25 +330,41 @@ export function FlightSearch() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2 sm:gap-4">
-          {tripTypeOptions.map((type) => (
-            <button
-              key={type}
-              onClick={() => setTripType(type)}
-              className={`px-3 py-2 sm:px-4 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-                tripType === type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              {tripTypeLabels[type]}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SEO
+        origin={origin}
+        destination={destination}
+        searchParams={searchParams}
+      />
+      
+      <main role="main">
+        <section aria-labelledby="search-heading">
+          <h2 id="search-heading" className="sr-only">
+            Flight Search Form
+          </h2>
+          
+          <div className="mb-6">
+            <fieldset>
+              <legend className="sr-only">Trip Type Selection</legend>
+              <div className="flex flex-wrap gap-2 sm:gap-4">
+                {tripTypeOptions.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setTripType(type)}
+                    className={`px-3 py-2 sm:px-4 rounded-lg font-medium transition-colors text-sm sm:text-base ${
+                      tripType === type
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                    aria-pressed={tripType === type}
+                  >
+                    {tripTypeLabels[type]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
 
-      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4">
+          <form className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
         {tripType === 'multi-city' ? (
           <div className="space-y-4">
             <MultiCitySegments
@@ -452,46 +469,55 @@ export function FlightSearch() {
             {isSearching ? 'Searching...' : 'Search flights'}
           </button>
         </div>
-      </div>
+          </form>
+        </section>
 
-      {tripType === 'multi-city' &&
-        searchParams &&
-        isMultiCitySearch(searchParams) && (
-          <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
-            <p className="text-blue-300 font-medium mb-2">Multi-city Search</p>
-            <p className="text-blue-200 text-sm">
-              Searching across {searchParams.segments.length} flight segments
-              using the multi-city endpoint. Results will include comprehensive
-              multi-city booking options.
-            </p>
-          </div>
+        {tripType === 'multi-city' &&
+          searchParams &&
+          isMultiCitySearch(searchParams) && (
+            <section aria-labelledby="multi-city-info">
+              <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
+                <h3 id="multi-city-info" className="text-blue-300 font-medium mb-2">Multi-city Search</h3>
+                <p className="text-blue-200 text-sm">
+                  Searching across {searchParams.segments.length} flight segments
+                  using the multi-city endpoint. Results will include comprehensive
+                  multi-city booking options.
+                </p>
+              </div>
+            </section>
+          )}
+
+        {error && (
+          <section aria-labelledby="error-heading">
+            <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6">
+              <h3 id="error-heading" className="text-red-300 font-medium mb-2">
+                Error searching flights
+              </h3>
+              <p className="text-red-200 text-sm">
+                {error instanceof Error
+                  ? error.message
+                  : 'An unexpected error occurred'}
+              </p>
+              <p className="text-red-200 text-xs mt-2">
+                Please check your API key configuration or try again later
+              </p>
+            </div>
+          </section>
         )}
 
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6">
-          <p className="text-red-300 font-medium mb-2">
-            Error searching flights
-          </p>
-          <p className="text-red-200 text-sm">
-            {error instanceof Error
-              ? error.message
-              : 'An unexpected error occurred'}
-          </p>
-          <p className="text-red-200 text-xs mt-2">
-            Please check your API key configuration or try again later
-          </p>
-        </div>
-      )}
-
-      {flightResults?.data && (
-        <FlightResults
-          results={flightResults}
-          isLoading={isSearching}
-          origin={origin}
-          destination={destination}
-          passengers={passengers}
-        />
-      )}
+        {flightResults?.data && (
+          <section aria-labelledby="results-heading">
+            <h2 id="results-heading" className="sr-only">Flight Search Results</h2>
+            <FlightResults
+              results={flightResults}
+              isLoading={isSearching}
+              origin={origin}
+              destination={destination}
+              passengers={passengers}
+            />
+          </section>
+        )}
+      </main>
 
       {isCaptchaOpen && captchaData && (
         <CaptchaModal
