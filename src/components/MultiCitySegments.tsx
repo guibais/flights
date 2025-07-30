@@ -8,7 +8,10 @@ type MultiCitySegmentsProps = {
   onSegmentsChange: (segments: Array<MultiCitySegment>) => void
 }
 
-export function MultiCitySegments({ segments, onSegmentsChange }: MultiCitySegmentsProps) {
+export function MultiCitySegments({
+  segments,
+  onSegmentsChange,
+}: MultiCitySegmentsProps) {
   const addSegment = () => {
     const newSegment: MultiCitySegment = {
       id: `segment-${Date.now()}`,
@@ -21,15 +24,19 @@ export function MultiCitySegments({ segments, onSegmentsChange }: MultiCitySegme
 
   const removeSegment = (segmentId: string) => {
     if (segments.length > 2) {
-      onSegmentsChange(segments.filter(segment => segment.id !== segmentId))
+      onSegmentsChange(segments.filter((segment) => segment.id !== segmentId))
     }
   }
 
-  const updateSegment = (segmentId: string, field: keyof MultiCitySegment, value: Airport | null | string) => {
+  const updateSegment = (
+    segmentId: string,
+    field: keyof MultiCitySegment,
+    value: Airport | null | string,
+  ) => {
     onSegmentsChange(
-      segments.map(segment =>
-        segment.id === segmentId ? { ...segment, [field]: value } : segment
-      )
+      segments.map((segment) =>
+        segment.id === segmentId ? { ...segment, [field]: value } : segment,
+      ),
     )
   }
 
@@ -53,31 +60,31 @@ export function MultiCitySegments({ segments, onSegmentsChange }: MultiCitySegme
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Origin */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 From
               </label>
               <AirportSelector
                 value={segment.origin}
-                onChange={(airport) => updateSegment(segment.id, 'origin', airport)}
+                onChange={(airport) =>
+                  updateSegment(segment.id, 'origin', airport)
+                }
                 placeholder="Where from?"
               />
             </div>
-
-            {/* Destination */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 To
               </label>
               <AirportSelector
                 value={segment.destination}
-                onChange={(airport) => updateSegment(segment.id, 'destination', airport)}
+                onChange={(airport) =>
+                  updateSegment(segment.id, 'destination', airport)
+                }
                 placeholder="Where to?"
               />
             </div>
 
-            {/* Date */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Departure
@@ -91,7 +98,6 @@ export function MultiCitySegments({ segments, onSegmentsChange }: MultiCitySegme
         </div>
       ))}
 
-      {/* Add Flight Button */}
       {segments.length < 6 && (
         <button
           onClick={addSegment}

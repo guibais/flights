@@ -100,7 +100,6 @@ export function PassengerSelector({
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg p-4 min-w-80 right-0 sm:right-auto"
         >
-          {/* Passenger Counts */}
           <div className="space-y-4 mb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -178,7 +177,6 @@ export function PassengerSelector({
             </div>
           </div>
 
-          {/* Cabin Class */}
           <div className="border-t border-gray-600 pt-4">
             <div className="font-medium text-white mb-3">Cabin class</div>
             <div className="space-y-2">
@@ -198,7 +196,6 @@ export function PassengerSelector({
             </div>
           </div>
 
-          {/* Done Button */}
           <div className="border-t border-gray-600 pt-4 mt-4">
             <button
               onClick={() => setIsOpen(false)}

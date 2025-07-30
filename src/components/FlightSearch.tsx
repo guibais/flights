@@ -1,15 +1,18 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRightLeft, SearchIcon } from 'lucide-react'
+import { useCaptcha } from '../hooks/useCaptcha'
 import { flightService } from '../services/flight.service'
 import { AirportSelector } from './AirportSelector.tsx'
+import { CaptchaModal } from './CaptchaModal.tsx'
 import { DateSelector } from './DateSelector.tsx'
-import { PassengerSelector } from './PassengerSelector.tsx'
 import { FlightResults } from './FlightResults.tsx'
 import { MultiCitySegments } from './MultiCitySegments.tsx'
+import { PassengerSelector } from './PassengerSelector.tsx'
 import type {
   Airport,
   CabinClass,
+  CaptchaError,
   FlightSearchParams,
   MultiCitySegment,
   PassengerCounts,
@@ -17,36 +20,54 @@ import type {
 } from '../types/flight.types'
 
 export function FlightSearch() {
-  const formatDate = (date: Date): string => {
+  const formatDate = useCallback((date: Date): string => {
     return date.toISOString().split('T')[0]
-  }
+  }, [])
 
-  const today = new Date()
+  const today = useMemo(() => new Date(), [])
+  const {
+    isOpen: isCaptchaOpen,
+    captchaData,
+    showCaptcha,
+    closeCaptcha,
+    handleCaptchaSolved,
+  } = useCaptcha()
 
   const [tripType, setTripType] = useState<TripType>('round-trip')
   const [origin, setOrigin] = useState<Airport | null>(null)
   const [destination, setDestination] = useState<Airport | null>(null)
+  const initialMultiCitySegments = useMemo<Array<MultiCitySegment>>(
+    () => [
+      {
+        id: 'segment-1',
+        origin: null,
+        destination: null,
+        date: formatDate(today),
+      },
+      {
+        id: 'segment-2',
+        origin: null,
+        destination: null,
+        date: formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000)), // tomorrow
+      },
+    ],
+    [today, formatDate],
+  )
+
   const [multiCitySegments, setMultiCitySegments] = useState<
     Array<MultiCitySegment>
-  >(() => [
-    {
-      id: 'segment-1',
-      origin: null,
-      destination: null,
-      date: formatDate(today),
-    },
-    {
-      id: 'segment-2',
-      origin: null,
-      destination: null,
-      date: formatDate(new Date(today.getTime() + 24 * 60 * 60 * 1000)), // tomorrow
-    },
-  ])
-  const returnDateDefault = new Date(today)
-  returnDateDefault.setDate(today.getDate() + 10)
+  >(initialMultiCitySegments)
 
-  const [departureDate, setDepartureDate] = useState<string>(formatDate(today))
-  const [returnDate, setReturnDate] = useState<string>(
+  const returnDateDefault = useMemo(() => {
+    const date = new Date(today)
+    date.setDate(today.getDate() + 10)
+    return date
+  }, [today])
+
+  const [departureDate, setDepartureDate] = useState<string>(() =>
+    formatDate(today),
+  )
+  const [returnDate, setReturnDate] = useState<string>(() =>
     formatDate(returnDateDefault),
   )
   const [passengers, setPassengers] = useState<PassengerCounts>({
@@ -59,24 +80,64 @@ export function FlightSearch() {
     null,
   )
 
+  const tripTypeOptions = useMemo(
+    () => ['round-trip', 'one-way', 'multi-city'] as const,
+    [],
+  )
+
+  const tripTypeLabels = useMemo(
+    () => ({
+      'round-trip': 'Round trip',
+      'one-way': 'One way',
+      'multi-city': 'Multi-city',
+    }),
+    [],
+  )
+
+  const gridClassName = useMemo(
+    () =>
+      `grid gap-4 items-end ${tripType === 'round-trip' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`,
+    [tripType],
+  )
+
+  const queryFn = useCallback(async () => {
+    if (!searchParams) return null
+    console.log('Searching flights with params:', searchParams)
+    try {
+      const result = await flightService.searchFlights(searchParams)
+      console.log('Flight search result:', result)
+      return result
+    } catch (apiError) {
+      const captchaError = apiError as CaptchaError
+      if (captchaError.captchaData) {
+        showCaptcha(captchaError.captchaData, () => refetch())
+        return null
+      }
+      throw apiError
+    }
+  }, [searchParams, showCaptcha])
+
+  const retryFn = useCallback((failureCount: number, retryError: Error) => {
+    const captchaError = retryError as CaptchaError
+    if (captchaError.captchaData) {
+      return false
+    }
+    return failureCount < 1
+  }, [])
+
   const {
     data: flightResults,
     isLoading: isSearching,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['flights', searchParams],
-    queryFn: async () => {
-      if (!searchParams) return null
-      console.log('Searching flights with params:', searchParams)
-      const result = await flightService.searchFlights(searchParams)
-      console.log('Flight search result:', result)
-      return result
-    },
+    queryFn,
     enabled: !!searchParams,
-    retry: 1,
+    retry: retryFn,
   })
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     if (tripType === 'multi-city') {
       const validSegments = multiCitySegments.filter(
         (segment) => segment.origin && segment.destination && segment.date,
@@ -131,20 +192,28 @@ export function FlightSearch() {
     }
 
     setSearchParams(params)
-  }
+  }, [
+    tripType,
+    multiCitySegments,
+    origin,
+    destination,
+    departureDate,
+    returnDate,
+    passengers,
+    cabinClass,
+  ])
 
-  const swapAirports = () => {
+  const swapAirports = useCallback(() => {
     const temp = origin
     setOrigin(destination)
     setDestination(temp)
-  }
+  }, [origin, destination])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Trip Type Selector */}
       <div className="mb-6">
         <div className="flex flex-wrap gap-2 sm:gap-4">
-          {(['round-trip', 'one-way', 'multi-city'] as const).map((type) => (
+          {tripTypeOptions.map((type) => (
             <button
               key={type}
               onClick={() => setTripType(type)}
@@ -154,27 +223,20 @@ export function FlightSearch() {
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
-              {type === 'round-trip'
-                ? 'Round trip'
-                : type === 'one-way'
-                  ? 'One way'
-                  : 'Multi-city'}
+              {tripTypeLabels[type]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Search Form */}
       <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-8 space-y-4">
         {tripType === 'multi-city' ? (
-          /* Multi-city Form */
           <div className="space-y-4">
             <MultiCitySegments
               segments={multiCitySegments}
               onSegmentsChange={setMultiCitySegments}
             />
 
-            {/* Travelers for Multi-city */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Travelers
@@ -188,11 +250,8 @@ export function FlightSearch() {
             </div>
           </div>
         ) : (
-          /* Round-trip and One-way Form */
           <>
-            {/* From/To Row */}
             <div className="grid grid-cols-2 gap-4 items-end">
-              {/* Origin */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   From
@@ -204,7 +263,6 @@ export function FlightSearch() {
                 />
               </div>
 
-              {/* Destination */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   To
@@ -217,7 +275,6 @@ export function FlightSearch() {
               </div>
             </div>
 
-            {/* Swap Button Row */}
             <div className="flex justify-center">
               <button
                 onClick={swapAirports}
@@ -228,11 +285,7 @@ export function FlightSearch() {
               </button>
             </div>
 
-            {/* Dates and Travelers Row */}
-            <div
-              className={`grid gap-4 items-end ${tripType === 'round-trip' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}
-            >
-              {/* Departure Date */}
+            <div className={gridClassName}>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Departure
@@ -243,7 +296,6 @@ export function FlightSearch() {
                 />
               </div>
 
-              {/* Return Date */}
               {tripType === 'round-trip' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -257,7 +309,6 @@ export function FlightSearch() {
                 </div>
               )}
 
-              {/* Travelers */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Travelers
@@ -273,18 +324,10 @@ export function FlightSearch() {
           </>
         )}
 
-        {/* Search Button */}
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleSearch}
-            disabled={
-              isSearching ||
-              (tripType === 'multi-city'
-                ? multiCitySegments.filter(
-                    (s) => s.origin && s.destination && s.date,
-                  ).length < 2
-                : !origin || !destination || !departureDate)
-            }
+            disabled={isSearching}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 sm:px-8 rounded-lg font-medium flex items-center gap-2 transition-colors w-full sm:w-auto"
           >
             <SearchIcon className="w-5 h-5" />
@@ -293,7 +336,6 @@ export function FlightSearch() {
         </div>
       </div>
 
-      {/* Multi-city Info */}
       {tripType === 'multi-city' && searchParams && (
         <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
           <p className="text-blue-300 font-medium mb-2">Multi-city Search</p>
@@ -305,7 +347,6 @@ export function FlightSearch() {
         </div>
       )}
 
-      {/* Results */}
       {error && (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6">
           <p className="text-red-300 font-medium mb-2">
@@ -329,6 +370,15 @@ export function FlightSearch() {
           origin={origin}
           destination={destination}
           passengers={passengers}
+        />
+      )}
+
+      {isCaptchaOpen && captchaData && (
+        <CaptchaModal
+          isOpen={isCaptchaOpen}
+          onClose={closeCaptcha}
+          onSolved={handleCaptchaSolved}
+          captchaData={captchaData}
         />
       )}
     </div>
