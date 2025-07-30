@@ -250,10 +250,11 @@ export const flightService = {
           setTimeout(resolve, Math.random() * 1000 + 500),
         )
 
-        // Transform segments to the format expected by the API
         const legs = params.segments
-          .filter(segment => segment.origin && segment.destination && segment.date)
-          .map(segment => ({
+          .filter(
+            (segment) => segment.origin && segment.destination && segment.date,
+          )
+          .map((segment) => ({
             originSkyId: segment.origin!.skyId,
             destinationSkyId: segment.destination!.skyId,
             originEntityId: segment.origin!.entityId,
@@ -262,7 +263,9 @@ export const flightService = {
           }))
 
         if (legs.length < 2) {
-          throw new Error('Multi-city search requires at least 2 flight segments')
+          throw new Error(
+            'Multi-city search requires at least 2 flight segments',
+          )
         }
 
         const queryParams = new URLSearchParams({

@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ArrowRightLeft, SearchIcon } from 'lucide-react'
 import { useCaptcha } from '../hooks/useCaptcha'
 import { flightService } from '../services/flight.service'
@@ -20,9 +21,94 @@ import type {
   TripType,
 } from '../types/flight.types'
 
-// Type guard functions
-const isMultiCitySearch = (params: FlightSearchParams | MultiCitySearchParams): params is MultiCitySearchParams => {
+const isMultiCitySearch = (
+  params: FlightSearchParams | MultiCitySearchParams,
+): params is MultiCitySearchParams => {
   return 'segments' in params
+}
+
+const serializeSearchParams = (
+  params: FlightSearchParams | MultiCitySearchParams,
+): Record<string, string> => {
+  if (isMultiCitySearch(params)) {
+    return {
+      tripType: 'multi-city',
+      segments: JSON.stringify(params.segments),
+      adults: params.adults?.toString() || '1',
+      children: params.children?.toString() || '0',
+      infants: params.infants?.toString() || '0',
+      cabinClass: params.cabinClass || 'economy',
+      sortBy: params.sortBy || 'best',
+      currency: params.currency || 'USD',
+      market: params.market || 'en-US',
+      countryCode: params.countryCode || 'US',
+    }
+  } else {
+    return {
+      tripType: params.returnDate ? 'round-trip' : 'one-way',
+      originSkyId: params.originSkyId,
+      destinationSkyId: params.destinationSkyId,
+      originEntityId: params.originEntityId,
+      destinationEntityId: params.destinationEntityId,
+      date: params.date,
+      ...(params.returnDate && { returnDate: params.returnDate }),
+      adults: params.adults?.toString() || '1',
+      children: params.children?.toString() || '0',
+      infants: params.infants?.toString() || '0',
+      cabinClass: params.cabinClass || 'economy',
+      sortBy: params.sortBy || 'best',
+      currency: params.currency || 'USD',
+      market: params.market || 'en-US',
+      countryCode: params.countryCode || 'US',
+      locale: params.locale || 'en-US',
+    }
+  }
+}
+
+const deserializeSearchParams = (
+  urlParams: Record<string, any>,
+): FlightSearchParams | MultiCitySearchParams | null => {
+  if (!urlParams.tripType) return null
+
+  const baseParams = {
+    adults: parseInt(urlParams.adults) || 1,
+    children: parseInt(urlParams.children) || 0,
+    infants: parseInt(urlParams.infants) || 0,
+    cabinClass: urlParams.cabinClass || 'economy',
+    sortBy: urlParams.sortBy || 'best',
+    currency: urlParams.currency || 'USD',
+    market: urlParams.market || 'en-US',
+    countryCode: urlParams.countryCode || 'US',
+  }
+
+  if (urlParams.tripType === 'multi-city' && urlParams.segments) {
+    try {
+      const segments = JSON.parse(urlParams.segments)
+      return {
+        ...baseParams,
+        segments,
+      } as MultiCitySearchParams
+    } catch {
+      return null
+    }
+  } else if (
+    urlParams.originSkyId &&
+    urlParams.destinationSkyId &&
+    urlParams.date
+  ) {
+    return {
+      ...baseParams,
+      originSkyId: urlParams.originSkyId,
+      destinationSkyId: urlParams.destinationSkyId,
+      originEntityId: urlParams.originEntityId,
+      destinationEntityId: urlParams.destinationEntityId,
+      date: urlParams.date,
+      ...(urlParams.returnDate && { returnDate: urlParams.returnDate }),
+      locale: urlParams.locale || 'en-US',
+    } as FlightSearchParams
+  }
+
+  return null
 }
 
 export function FlightSearch() {
@@ -31,6 +117,9 @@ export function FlightSearch() {
   }, [])
 
   const today = useMemo(() => new Date(), [])
+  const navigate = useNavigate()
+  const urlSearchParams = useSearch({ from: '/' })
+
   const {
     isOpen: isCaptchaOpen,
     captchaData,
@@ -82,9 +171,31 @@ export function FlightSearch() {
     infants: 0,
   })
   const [cabinClass, setCabinClass] = useState<CabinClass>('economy')
-  const [searchParams, setSearchParams] = useState<FlightSearchParams | MultiCitySearchParams | null>(
-    null,
-  )
+
+  const searchParams = useMemo(() => {
+    return deserializeSearchParams(urlSearchParams)
+  }, [urlSearchParams])
+
+  useEffect(() => {
+    if (searchParams) {
+      if (isMultiCitySearch(searchParams)) {
+        setTripType('multi-city')
+        setMultiCitySegments(searchParams.segments)
+      } else {
+        setTripType(searchParams.returnDate ? 'round-trip' : 'one-way')
+        setDepartureDate(searchParams.date)
+        if (searchParams.returnDate) {
+          setReturnDate(searchParams.returnDate)
+        }
+      }
+      setPassengers({
+        adults: searchParams.adults || 1,
+        children: searchParams.children || 0,
+        infants: searchParams.infants || 0,
+      })
+      setCabinClass(searchParams.cabinClass as CabinClass)
+    }
+  }, [searchParams])
 
   const tripTypeOptions = useMemo(
     () => ['round-trip', 'one-way', 'multi-city'] as const,
@@ -110,7 +221,6 @@ export function FlightSearch() {
     if (!searchParams) return null
     console.log('Searching flights with params:', searchParams)
     try {
-      // Check if it's multi-city search parameters and call appropriate service
       const result = isMultiCitySearch(searchParams)
         ? await flightService.searchMultiCityFlights(searchParams)
         : await flightService.searchFlights(searchParams)
@@ -157,8 +267,7 @@ export function FlightSearch() {
         )
         return
       }
-      
-      // Use the multi-city search parameters
+
       const multiCityParams = {
         segments: validSegments,
         adults: passengers.adults,
@@ -170,7 +279,9 @@ export function FlightSearch() {
         market: 'en-US',
         countryCode: 'US',
       }
-      setSearchParams(multiCityParams)
+
+      const serializedParams = serializeSearchParams(multiCityParams)
+      navigate({ to: '/', search: serializedParams })
       return
     }
 
@@ -196,7 +307,8 @@ export function FlightSearch() {
       locale: 'en-US',
     }
 
-    setSearchParams(params)
+    const serializedParams = serializeSearchParams(params)
+    navigate({ to: '/', search: serializedParams })
   }, [
     tripType,
     multiCitySegments,
@@ -206,6 +318,7 @@ export function FlightSearch() {
     returnDate,
     passengers,
     cabinClass,
+    navigate,
   ])
 
   const swapAirports = useCallback(() => {
@@ -341,15 +454,18 @@ export function FlightSearch() {
         </div>
       </div>
 
-      {tripType === 'multi-city' && searchParams && isMultiCitySearch(searchParams) && (
-        <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
-          <p className="text-blue-300 font-medium mb-2">Multi-city Search</p>
-          <p className="text-blue-200 text-sm">
-            Searching across {searchParams.segments.length} flight segments using the multi-city endpoint.
-            Results will include comprehensive multi-city booking options.
-          </p>
-        </div>
-      )}
+      {tripType === 'multi-city' &&
+        searchParams &&
+        isMultiCitySearch(searchParams) && (
+          <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4 mb-6">
+            <p className="text-blue-300 font-medium mb-2">Multi-city Search</p>
+            <p className="text-blue-200 text-sm">
+              Searching across {searchParams.segments.length} flight segments
+              using the multi-city endpoint. Results will include comprehensive
+              multi-city booking options.
+            </p>
+          </div>
+        )}
 
       {error && (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6">
